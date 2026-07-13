@@ -11,6 +11,16 @@ export function saveHtml(source: string, filename: string) {
 }
 
 /**
+ * Saves text to a JSON file. This works in either a browser or Electron
+ * context.
+ */
+export function saveJson(source: string, filename: string) {
+	const data = new Blob([source], {type: 'application/json;charset=utf-8'});
+
+	saveAs(data, filename);
+}
+
+/**
  * Saves text to a Twee file. This works in either a browser or Electron
  * context.
  */

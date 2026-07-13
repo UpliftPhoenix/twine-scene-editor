@@ -413,6 +413,7 @@
 			"storyFormats": "Story Formats"
 		},
 		"build": {
+			"exportAsJson": "Export As JSON",
 			"exportAsTwee": "Export As Twee",
 			"play": "Play",
 			"proof": "Proof",

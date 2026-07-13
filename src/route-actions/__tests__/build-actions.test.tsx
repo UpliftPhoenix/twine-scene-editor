@@ -6,7 +6,9 @@ import {Story} from '../../store/stories';
 import {usePublishing} from '../../store/use-publishing';
 import {useStoryLaunch} from '../../store/use-story-launch';
 import {fakeStory} from '../../test-util';
-import {saveTwee} from '../../util/save-file';
+import {getAppInfo} from '../../util/app-info';
+import {saveJson, saveTwee} from '../../util/save-file';
+import {storyToJson} from '../../util/story-to-json';
 import {storyToTwee} from '../../util/twee';
 import {BuildActions, BuildActionsProps} from '../build-actions';
 
@@ -15,6 +17,7 @@ jest.mock('../../store/use-story-launch');
 jest.mock('../../util/save-file');
 
 describe('<BuildActions>', () => {
+	const saveJsonMock = saveJson as jest.Mock;
 	const saveTweeMock = saveTwee as jest.Mock;
 	const usePublishingMock = usePublishing as jest.Mock;
 	const useStoryLaunchMock = useStoryLaunch as jest.Mock;
@@ -47,6 +50,11 @@ describe('<BuildActions>', () => {
 		it('disables the export to Twee button', () =>
 			expect(
 				screen.getByText('routeActions.build.exportAsTwee')
+			).toBeDisabled());
+
+		it('disables the export to JSON button', () =>
+			expect(
+				screen.getByText('routeActions.build.exportAsJson')
 			).toBeDisabled());
 	});
 
@@ -122,6 +130,20 @@ describe('<BuildActions>', () => {
 			expect(saveTweeMock.mock.calls).toEqual([
 				[storyToTwee(story), storyFileName(story, '.twee')]
 			]);
+		});
+
+		it('displays a button to export the story as JSON', () => {
+			// The exported JSON contains a creation timestamp, so Date.now() must be
+			// pinned for the expected value to match.
+
+			const dateNowSpy = jest.spyOn(Date, 'now').mockReturnValue(12345);
+
+			expect(saveJsonMock).not.toHaveBeenCalled();
+			fireEvent.click(screen.getByText('routeActions.build.exportAsJson'));
+			expect(saveJsonMock.mock.calls).toEqual([
+				[storyToJson(story, getAppInfo()), storyFileName(story, '.json')]
+			]);
+			dateNowSpy.mockRestore();
 		});
 	});
 

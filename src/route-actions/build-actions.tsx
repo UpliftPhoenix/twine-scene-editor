@@ -11,12 +11,14 @@ import {ButtonBar} from '../components/container/button-bar';
 import {CardContent} from '../components/container/card';
 import {CardButton} from '../components/control/card-button';
 import {IconButton} from '../components/control/icon-button';
-import {IconFileTwee} from '../components/image/icon';
+import {IconFileJson, IconFileTwee} from '../components/image/icon';
 import {storyFileName} from '../electron/shared';
 import {Story} from '../store/stories';
 import {usePublishing} from '../store/use-publishing';
 import {useStoryLaunch} from '../store/use-story-launch';
-import {saveHtml, saveTwee} from '../util/save-file';
+import {getAppInfo} from '../util/app-info';
+import {saveHtml, saveJson, saveTwee} from '../util/save-file';
+import {storyToJson} from '../util/story-to-json';
 import {storyToTwee} from '../util/twee';
 
 export interface BuildActionsProps {
@@ -93,6 +95,14 @@ export const BuildActions: React.FC<BuildActionsProps> = ({story}) => {
 		} catch (error) {
 			setTestError(error as Error);
 		}
+	}
+
+	function handleExportAsJson() {
+		if (!story) {
+			throw new Error('No story provided to export');
+		}
+
+		saveJson(storyToJson(story, getAppInfo()), storyFileName(story, '.json'));
 	}
 
 	function handleExportAsTwee() {
@@ -186,6 +196,12 @@ export const BuildActions: React.FC<BuildActionsProps> = ({story}) => {
 				icon={<IconFileTwee />}
 				label={t('routeActions.build.exportAsTwee')}
 				onClick={handleExportAsTwee}
+			/>
+			<IconButton
+				disabled={!story}
+				icon={<IconFileJson />}
+				label={t('routeActions.build.exportAsJson')}
+				onClick={handleExportAsJson}
 			/>
 		</ButtonBar>
 	);

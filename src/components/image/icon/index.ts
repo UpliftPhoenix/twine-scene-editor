@@ -1,6 +1,7 @@
 export * from './empty';
 export * from './loading';
 export * from './tag-nub';
+export * from './file-json';
 export * from './file-twee';
 export * from './twine';
 export * from './type-size';

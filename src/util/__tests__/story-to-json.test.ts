@@ -1,0 +1,169 @@
+import {fakePassage, fakeStory} from '../../test-util';
+import {AppInfo} from '../app-info';
+import {storyToJson, storyToJsonData} from '../story-to-json';
+
+describe('storyToJsonData()', () => {
+	const appInfo: AppInfo = {name: 'mock-app', version: '1.2.3'};
+
+	beforeEach(() => {
+		jest.spyOn(Date, 'now').mockReturnValue(12345);
+	});
+
+	afterEach(() => jest.restoreAllMocks());
+
+	it('sets story properties from the story and app info', () => {
+		const story = fakeStory(0);
+		const result = storyToJsonData(story, appInfo);
+
+		expect(result).toEqual({
+			uuid: story.ifid,
+			name: story.name,
+			creator: 'mock-app',
+			creatorVersion: '1.2.3',
+			schemaName: story.storyFormat,
+			schemaVersion: story.storyFormatVersion,
+			createdAtMs: 12345,
+			passages: []
+		});
+	});
+
+	it('assigns passages sequential string IDs and space-separated tags', () => {
+		const story = fakeStory(2);
+
+		story.passages[0].tags = ['one', 'two'];
+		story.passages[1].tags = [];
+
+		const result = storyToJsonData(story, appInfo);
+
+		expect(result.passages[0].id).toBe('1');
+		expect(result.passages[0].tags).toBe('one two');
+		expect(result.passages[0].name).toBe(story.passages[0].name);
+		expect(result.passages[1].id).toBe('2');
+		expect(result.passages[1].tags).toBe('');
+	});
+
+	it('trims passage text', () => {
+		const story = fakeStory(1);
+
+		story.passages[0].text = '  some text\n';
+
+		expect(storyToJsonData(story, appInfo).passages[0].text).toBe('some text');
+	});
+
+	describe('link extraction', () => {
+		function linksOf(text: string) {
+			const story = fakeStory(1);
+
+			story.passages[0].text = text;
+			return storyToJsonData(story, appInfo).passages[0];
+		}
+
+		it('extracts simple links', () => {
+			expect(linksOf('Go [[There]].').links).toEqual([
+				{linkText: 'There', passageName: 'There', original: '[[There]]'}
+			]);
+		});
+
+		it('extracts right-arrow links', () => {
+			expect(linksOf('[[Click me -> Target]]').links).toEqual([
+				{
+					linkText: 'Click me',
+					passageName: 'Target',
+					original: '[[Click me -> Target]]'
+				}
+			]);
+		});
+
+		it('extracts left-arrow links', () => {
+			expect(linksOf('[[Target <- Click me]]').links).toEqual([
+				{
+					linkText: 'Click me',
+					passageName: 'Target',
+					original: '[[Target <- Click me]]'
+				}
+			]);
+		});
+
+		it('extracts multiple links', () => {
+			expect(linksOf('[[a]] and [[b]]').links).toEqual([
+				{linkText: 'a', passageName: 'a', original: '[[a]]'},
+				{linkText: 'b', passageName: 'b', original: '[[b]]'}
+			]);
+		});
+
+		it('removes links from cleanText', () => {
+			expect(linksOf('Go [[There]].').cleanText).toBe('Go .');
+		});
+	});
+
+	describe('with a Harlowe 3 story', () => {
+		function passageOf(text: string) {
+			const story = fakeStory(1);
+
+			story.storyFormat = 'Harlowe';
+			story.storyFormatVersion = '3.3.5';
+			story.passages[0].text = text;
+			return storyToJsonData(story, appInfo).passages[0];
+		}
+
+		it('extracts named hooks of the form |name>[text]', () => {
+			expect(passageOf('|aside>[a note]').hooks).toEqual([
+				{hookName: 'aside', hookText: 'a note', original: '|aside>[a note]'}
+			]);
+		});
+
+		it('extracts named hooks of the form [text]<name|', () => {
+			expect(passageOf('x [a note]<aside| y').hooks).toEqual([
+				{hookName: 'aside', hookText: 'a note', original: '[a note]<aside|'}
+			]);
+		});
+
+		it('extracts anonymous hooks', () => {
+			expect(passageOf('(if: true)[shown]').hooks).toEqual([
+				{hookName: undefined, hookText: 'shown', original: '[shown]'}
+			]);
+		});
+
+		it('removes hooks from cleanText', () => {
+			expect(passageOf('before |aside>[a note] after').cleanText).toBe(
+				'before  after'
+			);
+		});
+	});
+
+	describe('with a non-Harlowe story', () => {
+		it('omits hooks from passages', () => {
+			const story = fakeStory(1);
+
+			story.storyFormat = 'SugarCube';
+			story.storyFormatVersion = '2.36.1';
+			story.passages[0].text = '|aside>[a note]';
+
+			const passage = storyToJsonData(story, appInfo).passages[0];
+
+			expect(passage).not.toHaveProperty('hooks');
+			expect(passage.cleanText).toBe('|aside>[a note]');
+		});
+	});
+});
+
+describe('storyToJson()', () => {
+	it('returns formatted JSON of storyToJsonData()', () => {
+		jest.spyOn(Date, 'now').mockReturnValue(12345);
+
+		const appInfo = {name: 'mock-app', version: '1.2.3'};
+		const story = fakeStory(1);
+
+		story.passages[0] = fakePassage({
+			name: 'Start',
+			story: story.id,
+			tags: [],
+			text: 'Hello [[world]]'
+		});
+
+		expect(JSON.parse(storyToJson(story, appInfo))).toEqual(
+			storyToJsonData(story, appInfo)
+		);
+		jest.restoreAllMocks();
+	});
+});
