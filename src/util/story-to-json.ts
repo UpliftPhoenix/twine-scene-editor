@@ -31,6 +31,17 @@ export interface JsonPassage {
 	cleanText: string;
 }
 
+export interface JsonDataNode {
+	name: string;
+	tags: string;
+	id: string;
+	/**
+	 * The node's parsed JSON contents. If the node's text isn't valid JSON,
+	 * this is the raw text instead.
+	 */
+	data: unknown;
+}
+
 export interface JsonStory {
 	uuid: string;
 	name: string;
@@ -40,6 +51,7 @@ export interface JsonStory {
 	schemaVersion: string;
 	createdAtMs: number;
 	passages: JsonPassage[];
+	data: JsonDataNode[];
 }
 
 /**
@@ -319,11 +331,35 @@ function passageToJson(
 }
 
 /**
+ * Converts a single data node to its JSON representation. Like passages, data
+ * nodes are identified by a sequential numeric ID, not their UUID.
+ */
+function dataNodeToJson(passage: Passage, localId: number): JsonDataNode {
+	let data: unknown = passage.text;
+
+	try {
+		data = JSON.parse(passage.text);
+	} catch (error) {
+		// The node's text isn't valid JSON, so export it as raw text.
+	}
+
+	return {
+		name: passage.name,
+		tags: passage.tags.join(' '),
+		id: localId.toString(),
+		data
+	};
+}
+
+/**
  * Converts a story to a JSON-serializable structure matching the Twine to
- * JSON format.
+ * JSON format, extended with a `data` array containing the story's data
+ * nodes.
  */
 export function storyToJsonData(story: Story, appInfo: AppInfo): JsonStory {
 	const format = jsonFormat(story);
+	const passages = story.passages.filter(passage => passage.type !== 'data');
+	const dataNodes = story.passages.filter(passage => passage.type === 'data');
 
 	return {
 		uuid: story.ifid,
@@ -333,9 +369,10 @@ export function storyToJsonData(story: Story, appInfo: AppInfo): JsonStory {
 		schemaName: story.storyFormat,
 		schemaVersion: story.storyFormatVersion,
 		createdAtMs: Date.now(),
-		passages: story.passages.map((passage, index) =>
+		passages: passages.map((passage, index) =>
 			passageToJson(passage, index + 1, format)
-		)
+		),
+		data: dataNodes.map((dataNode, index) => dataNodeToJson(dataNode, index + 1))
 	};
 }
 

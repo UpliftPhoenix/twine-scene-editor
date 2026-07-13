@@ -41,8 +41,12 @@ export function deleteOrphanedPassages(
 
 			// These tests are fast because they look at the passage object only.
 
+			// Data nodes were never automatically created by a link, so they're
+			// never orphans.
+
 			if (
 				!orphanPassage ||
+				orphanPassage.type === 'data' ||
 				!passageIsEmpty(orphanPassage) ||
 				story.startPassage === orphanPassage.id
 			) {

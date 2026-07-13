@@ -1,5 +1,9 @@
 import * as React from 'react';
-import {addPassageEditors, useDialogsContext} from '../../dialogs';
+import {
+	addPassageEditors,
+	DataNodeEditDialog,
+	useDialogsContext
+} from '../../dialogs';
 import {
 	deselectPassage,
 	movePassages,
@@ -54,8 +58,20 @@ export function usePassageChangeHandlers(story: Story) {
 	);
 
 	const handleEditPassage = React.useCallback(
-		(passage: Passage) =>
-			dialogsDispatch(addPassageEditors(story.id, [passage.id])),
+		(passage: Passage) => {
+			// Data nodes get their own editor dialog instead of the passage editor
+			// stack.
+
+			if (passage.type === 'data') {
+				dialogsDispatch({
+					type: 'addDialog',
+					component: DataNodeEditDialog,
+					props: {passageId: passage.id, storyId: story.id}
+				});
+			} else {
+				dialogsDispatch(addPassageEditors(story.id, [passage.id]));
+			}
+		},
 		[dialogsDispatch, story.id]
 	);
 

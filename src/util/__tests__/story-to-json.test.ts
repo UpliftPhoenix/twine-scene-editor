@@ -23,7 +23,53 @@ describe('storyToJsonData()', () => {
 			schemaName: story.storyFormat,
 			schemaVersion: story.storyFormatVersion,
 			createdAtMs: 12345,
-			passages: []
+			passages: [],
+			data: []
+		});
+	});
+
+	describe('data nodes', () => {
+		it('exports data nodes in a data array, not passages', () => {
+			const story = fakeStory(2);
+
+			story.passages[1].type = 'data';
+			story.passages[1].text = '{"speed": 3, "flying": true}';
+
+			const result = storyToJsonData(story, appInfo);
+
+			expect(result.passages.length).toBe(1);
+			expect(result.passages[0].name).toBe(story.passages[0].name);
+			expect(result.data).toEqual([
+				{
+					name: story.passages[1].name,
+					tags: story.passages[1].tags.join(' '),
+					id: '1',
+					data: {speed: 3, flying: true}
+				}
+			]);
+		});
+
+		it('assigns data nodes sequential string IDs independent of passages', () => {
+			const story = fakeStory(3);
+
+			story.passages[1].type = 'data';
+			story.passages[1].text = '1';
+			story.passages[2].type = 'data';
+			story.passages[2].text = '2';
+
+			const result = storyToJsonData(story, appInfo);
+
+			expect(result.passages.map(({id}) => id)).toEqual(['1']);
+			expect(result.data.map(({id}) => id)).toEqual(['1', '2']);
+		});
+
+		it('exports the raw text of a data node whose text is invalid JSON', () => {
+			const story = fakeStory(1);
+
+			story.passages[0].type = 'data';
+			story.passages[0].text = '{oops';
+
+			expect(storyToJsonData(story, appInfo).data[0].data).toBe('{oops');
 		});
 	});
 

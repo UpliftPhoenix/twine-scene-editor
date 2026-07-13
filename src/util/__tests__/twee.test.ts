@@ -287,6 +287,20 @@ describe('passageToTwee()', () => {
 		);
 	});
 
+	it('includes type metadata for data nodes and round-trips it', () => {
+		const dataNode = fakePassage({
+			name: 'mock-data-node',
+			tags: [],
+			text: '{"a": 1}',
+			type: 'data'
+		});
+
+		expect(passageToTwee(dataNode)).toBe(
+			`:: mock-data-node {"position":"${dataNode.left},${dataNode.top}","size":"${dataNode.width},${dataNode.height}","type":"data"}\n${dataNode.text}\n`
+		);
+		expect(passageFromTwee(passageToTwee(dataNode)).type).toBe('data');
+	});
+
 	it('converts a passage with tags properly', () => {
 		const passage = fakePassage({
 			name: 'mock-passage',

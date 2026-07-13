@@ -50,6 +50,28 @@
 	z-index: 1;
 }
 
+.passage-card.data-node h2 {
+	align-items: center;
+	display: flex;
+	gap: 4px;
+}
+
+.passage-card.data-node h2 svg {
+	flex-shrink: 0;
+	height: 1em;
+	width: 1em;
+}
+
+.passage-card.data-node .card {
+	border-left: 3px solid var(--blue);
+}
+
+.passage-card.data-node .card-content {
+	font-family: var(--font-monospaced);
+	font-size: 90%;
+	word-break: break-all;
+}
+
 .passage-card.empty .card {
 	background: hsla(0, 100%, 100%, 0.33);
 	border: 1px dashed var(--gray);

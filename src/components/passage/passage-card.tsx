@@ -1,3 +1,4 @@
+import {IconDatabase} from '@tabler/icons';
 import classNames from 'classnames';
 import {deviceType} from 'detect-it';
 import * as React from 'react';
@@ -42,6 +43,7 @@ export const PassageCard: React.FC<PassageCardProps> = React.memo(props => {
 	const className = React.useMemo(
 		() =>
 			classNames('passage-card', {
+				'data-node': passage.type === 'data',
 				empty: passageIsEmpty(passage),
 				selected: passage.selected,
 				[`tag-display-${tagDisplay}`]: true
@@ -120,7 +122,10 @@ export const PassageCard: React.FC<PassageCardProps> = React.memo(props => {
 					selected={passage.selected}
 				>
 					{tagDisplay === 'color' && <TagStripe tagColors={tagColors} tags={passage.tags} />}
-					<h2>{passage.name}</h2>
+					<h2>
+						{passage.type === 'data' && <IconDatabase aria-hidden />}
+						{passage.name}
+					</h2>
 					<CardContent>{excerpt}</CardContent>
 					{tagDisplay === 'name' && <TagBadges tagColors={tagColors} tags={passage.tags} />}
 				</SelectableCard>

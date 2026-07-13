@@ -114,7 +114,10 @@ function domToObject(storyEl: Element): ImportedStory {
 					? passageEl.getAttribute('tags')!.split(/\s+/)
 					: [],
 				name: passageEl.getAttribute('name') ?? undefined,
-				text: passageEl.textContent ?? undefined
+				text: passageEl.textContent ?? undefined,
+				...(passageEl.getAttribute('type') === 'data'
+					? {type: 'data' as const}
+					: {})
 			};
 		})
 	};

@@ -3,6 +3,13 @@ import {Color} from '../../util/color';
 import {StoryFormat} from '../story-formats/story-formats.types';
 
 /**
+ * The kind of node a passage represents in the story map. `'passage'` (or
+ * `undefined`, for data created before this field existed) is a normal
+ * passage; `'data'` is a data node whose text is JSON instead of story text.
+ */
+export type PassageNodeType = 'passage' | 'data';
+
+/**
  * A single passage in a story.
  */
 export interface Passage {
@@ -46,6 +53,11 @@ export interface Passage {
 	 * Top (e.g. Y) position of the top-left corner of the passage in pixels.
 	 */
 	top: number;
+	/**
+	 * What kind of node this is. Data nodes hold JSON in `text`, can't be
+	 * linked, and can't be a story's start passage.
+	 */
+	type?: PassageNodeType;
 	/**
 	 * Width of the passage in pixels.
 	 */

@@ -168,6 +168,31 @@
 			"noThanks": "No Thanks",
 			"title": "Support Twine Development"
 		},
+		"dataNodeEdit": {
+			"builder": {
+				"booleanLabel": "Boolean Value",
+				"dropHint": "Drag a type here from the palette above, or use the add button.",
+				"invalidJson": "This data node's JSON has errors. Fix them in the text view to use the visual builder.",
+				"itemCount": "{{count}} item",
+				"itemCount_plural": "{{count}} items",
+				"keyLabel": "Key",
+				"numberLabel": "Number Value",
+				"paletteHint": "Drag a type onto an object or array below to add a value.",
+				"stringLabel": "String Value",
+				"types": {
+					"array": "Array",
+					"boolean": "Boolean",
+					"null": "Null",
+					"number": "Number",
+					"object": "Object",
+					"string": "String"
+				}
+			},
+			"editorLabel": "Data Node JSON",
+			"jsonPlaceholder": "Enter this data node's contents here, in JSON format.",
+			"textView": "JSON Text",
+			"visualView": "Visual Builder"
+		},
 		"appPrefs": {
 			"codeEditorFont": "Code Editor Font",
 			"codeEditorFontScale": "Code Editor Font Size",
@@ -337,6 +362,7 @@
 				"findAndReplace": "Find and Replace",
 				"goTo": "Go To",
 				"javaScript": "JavaScript",
+				"newDataNode": "New Data",
 				"passageTags": "Passage Tags",
 				"snapToGrid": "Snap to Grid",
 				"startStoryHere": "Start Story Here",
@@ -430,6 +456,9 @@
 			"electronRemediation": "Restarting this application may help.",
 			"webRemediation": "Reloading this page may help."
 		},
+		"dataNodeDefaults": {
+			"name": "Untitled Data Node"
+		},
 		"passageDefaults": {
 			"name": "Untitled Passage"
 		},
@@ -443,7 +472,10 @@
 	"undoChange": {
 		"addTag": "Add Tag",
 		"changeTagColor": "Change Tag Color",
+		"editDataNode": "Edit Data Node",
+		"newDataNode": "New Data Node",
 		"newPassage": "New Passage",
+		"renameDataNode": "Rename Data Node",
 		"deletePassage": "Delete Passage",
 		"deletePassages": "Delete Passages",
 		"movePassage": "Move Passage",

@@ -98,6 +98,24 @@ describe('importStories', () => {
 		);
 	});
 
+	it('imports passages with a type="data" attribute as data nodes', () => {
+		const result = importStories(
+			'<tw-storydata name="Test" hidden>' +
+				'<tw-passagedata pid="1" name="A Passage" tags="" position="0,0" size="100,100">text</tw-passagedata>' +
+				'<tw-passagedata pid="2" name="A Data Node" tags="" position="200,0" size="100,100" type="data">{"a": 1}</tw-passagedata>' +
+				'</tw-storydata>'
+		);
+
+		expect(result[0].passages[0].type).toBeUndefined();
+		expect(result[0].passages[1]).toEqual(
+			expect.objectContaining({
+				name: 'A Data Node',
+				text: '{"a": 1}',
+				type: 'data'
+			})
+		);
+	});
+
 	it("allows setting the story's creation date manually", () => {
 		const forceDate = new Date(Date.parse('January 1, 1987'));
 		const result = importStories(testHtml, forceDate);

@@ -59,6 +59,28 @@ describe('Story reducer createPassage action handler', () => {
 		]);
 	});
 
+	it("doesn't set the story's start passage when the first passage is a data node", () => {
+		const story = fakeStory(0);
+		const dataNode = fakePassage({type: 'data'});
+
+		story.startPassage = '';
+
+		expect(createPassage([story], story.id, dataNode)[0].startPassage).toBe('');
+	});
+
+	it("sets the story's start passage to the first non-data passage created", () => {
+		const story = fakeStory(0);
+		const dataNode = fakePassage({name: 'data node', type: 'data'});
+
+		story.startPassage = '';
+
+		const withDataNode = createPassage([story], story.id, dataNode);
+		const passage = fakePassage();
+		const result = createPassage(withDataNode, story.id, passage);
+
+		expect(result[0].startPassage).toBe(passage.id);
+	});
+
 	it("doesn't affect other passages in the story", () => {
 		const story = fakeStory(1);
 		const originalPassage = story.passages[0];

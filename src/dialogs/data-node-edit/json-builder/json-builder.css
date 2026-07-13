@@ -1,0 +1,179 @@
+@import '../../../styles/colors.css';
+@import '../../../styles/metrics.css';
+@import '../../../styles/typography.css';
+
+.json-builder {
+	display: flex;
+	flex-direction: column;
+	flex-grow: 1;
+	min-height: 0;
+	overflow: hidden;
+}
+
+.json-builder-toolbar {
+	align-items: center;
+	border-bottom: 1px solid var(--light-gray);
+	display: flex;
+	flex-shrink: 0;
+	gap: var(--grid-size);
+	padding: calc(var(--grid-size) / 2) var(--grid-size);
+}
+
+.json-builder-palette {
+	align-items: center;
+	display: flex;
+	flex-grow: 1;
+	flex-wrap: wrap;
+	gap: calc(var(--grid-size) / 2);
+}
+
+.json-builder-palette-item {
+	background: var(--faint-blue);
+	border: 1px solid var(--blue);
+	border-radius: var(--corner-round);
+	cursor: grab;
+	font-family: var(--font-monospaced);
+	font-size: 85%;
+	padding: calc(var(--grid-size) / 4) calc(var(--grid-size) / 2);
+	user-select: none;
+}
+
+.json-builder-palette-item:active {
+	cursor: grabbing;
+}
+
+.json-builder-palette-hint {
+	color: var(--gray);
+	font-size: 80%;
+}
+
+.json-builder-canvas {
+	flex-grow: 1;
+	overflow: auto;
+	padding: var(--grid-size);
+}
+
+.json-builder-canvas input,
+.json-builder-canvas select {
+	font-family: var(--font-monospaced);
+	font-size: 90%;
+}
+
+.json-builder-container {
+	border: 1px solid var(--light-gray);
+	border-left: 3px solid var(--blue);
+	border-radius: var(--corner-round);
+	display: flex;
+	flex-direction: column;
+	flex-grow: 1;
+	gap: calc(var(--grid-size) / 2);
+	min-width: 0;
+	padding: calc(var(--grid-size) / 2);
+}
+
+.json-builder-container.array {
+	border-left-color: var(--purple);
+}
+
+.json-builder-container.drop-target {
+	background: var(--faint-blue);
+	border-style: dashed;
+}
+
+.json-builder-container-header {
+	align-items: baseline;
+	display: flex;
+	gap: calc(var(--grid-size) / 2);
+}
+
+.json-builder-type-badge {
+	font-family: var(--font-monospaced);
+	font-size: 80%;
+	font-weight: bold;
+	text-transform: uppercase;
+}
+
+.json-builder-count {
+	color: var(--gray);
+	font-size: 80%;
+}
+
+.json-builder-empty {
+	border: 1px dashed var(--gray);
+	border-radius: var(--corner-round);
+	color: var(--gray);
+	font-size: 85%;
+	font-style: italic;
+	padding: calc(var(--grid-size) / 2);
+	text-align: center;
+}
+
+.json-builder-row {
+	align-items: flex-start;
+	display: flex;
+	gap: calc(var(--grid-size) / 2);
+}
+
+/*
+Compact the remove button so it doesn't set the row height--at its default
+control height, every row gets what looks like extra bottom padding.
+*/
+
+.json-builder-row > .icon-button {
+	flex-shrink: 0;
+	height: auto;
+	padding: 1px calc(var(--grid-size) / 4);
+}
+
+.json-builder-row > .icon-button .icon svg {
+	top: 0;
+}
+
+.json-builder-index {
+	color: var(--gray);
+	flex-shrink: 0;
+	font-family: var(--font-monospaced);
+	font-size: 85%;
+	min-width: 2em;
+	padding-top: calc(var(--grid-size) / 4);
+	text-align: right;
+}
+
+.json-builder-key {
+	flex-shrink: 0;
+	width: 10em;
+}
+
+.json-builder-key.invalid,
+.json-builder-number.invalid {
+	box-shadow: inset 0 0 0 2px var(--red);
+	outline: none;
+}
+
+.json-builder-string {
+	flex-grow: 1;
+	min-width: 5em;
+}
+
+.json-builder-number {
+	width: 8em;
+}
+
+.json-builder-null {
+	color: var(--gray);
+	font-family: var(--font-monospaced);
+	font-style: italic;
+	padding-top: calc(var(--grid-size) / 4);
+}
+
+.json-builder-invalid {
+	color: var(--gray);
+	margin: auto;
+	max-width: 80%;
+	text-align: center;
+}
+
+.json-builder-invalid-detail {
+	font-family: var(--font-monospaced);
+	font-size: 85%;
+}

@@ -1,0 +1,27 @@
+@import '../../styles/colors.css';
+
+/*
+CodeMirror's default gutter theme is light regardless of the app theme, so
+align it with the dialog's own colors.
+*/
+
+.data-node-edit-dialog .CodeMirror-gutters {
+	background: var(--white);
+	border-right: 1px solid var(--faint-gray);
+}
+
+.data-node-edit-dialog .CodeMirror-linenumber {
+	color: var(--gray);
+}
+
+/* Needed when CodeMirror is disabled. */
+
+.data-node-edit-dialog .dialog-editor textarea {
+	border-radius: 0;
+	font-family: var(--font-monospaced);
+}
+
+.data-node-edit-dialog .dialog-editor textarea:focus {
+	box-shadow: inset 0 0 0px 2px var(--blue);
+	outline: none;
+}

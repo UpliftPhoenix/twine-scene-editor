@@ -8,6 +8,7 @@ import {
 	useStoriesContext
 } from '../../../../store/stories';
 import {Point} from '../../../../util/geometry';
+import {CreateDataNodeButton} from './create-data-node-button';
 import {CreatePassageButton} from './create-passage-button';
 import {DeletePassagesButton} from './delete-passages-button';
 import {EditPassagesButton} from './edit-passages-buttons';
@@ -35,6 +36,12 @@ export const PassageActions: React.FC<PassageActionsProps> = props => {
 		[selectedPassages]
 	);
 
+	// Testing and starting the story only make sense for normal passages, not
+	// data nodes.
+
+	const soloSelectedNormalPassage =
+		soloSelectedPassage?.type === 'data' ? undefined : soloSelectedPassage;
+
 	function handleRename(name: string, passage?: Passage) {
 		if (!passage) {
 			throw new Error('Passage is unset');
@@ -51,6 +58,7 @@ export const PassageActions: React.FC<PassageActionsProps> = props => {
 	return (
 		<ButtonBar>
 			<CreatePassageButton getCenter={getCenter} story={story} />
+			<CreateDataNodeButton getCenter={getCenter} story={story} />
 			<EditPassagesButton passages={selectedPassages} story={story} />
 			<RenamePassageButton
 				onRename={name => handleRename(name, soloSelectedPassage)}
@@ -58,8 +66,11 @@ export const PassageActions: React.FC<PassageActionsProps> = props => {
 				story={story}
 			/>
 			<DeletePassagesButton passages={selectedPassages} story={story} />
-			<TestPassageButton passage={soloSelectedPassage} story={story} />
-			<StartAtPassageButton passage={soloSelectedPassage} story={story} />
+			<TestPassageButton passage={soloSelectedNormalPassage} story={story} />
+			<StartAtPassageButton
+				passage={soloSelectedNormalPassage}
+				story={story}
+			/>
 			<GoToPassageButton onOpenFuzzyFinder={onOpenFuzzyFinder} />
 			<SelectAllPassagesButton story={story} />
 			<DeselectAllPassagesButton

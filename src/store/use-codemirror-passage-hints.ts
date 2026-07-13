@@ -41,7 +41,13 @@ export function useCodeMirrorPassageHints(story: Story) {
 						from,
 						to,
 						list: story.passages.reduce<string[]>((result, passage) => {
-							if (passage.name.toLowerCase().includes(candidate)) {
+							// Data nodes can't be linked to, so they're not offered as
+							// completions.
+
+							if (
+								passage.type !== 'data' &&
+								passage.name.toLowerCase().includes(candidate)
+							) {
 								return [...result, passage.name];
 							}
 

@@ -4,6 +4,14 @@ import {Passage, StorySearchFlags, Story} from './stories.types';
 import {createRegExp} from '../../util/regexp';
 import {parseLinks} from '../../util/parse-links';
 
+/**
+ * Returns whether a passage is a data node, i.e. holds JSON data instead of
+ * story text.
+ */
+export function isDataNode(passage: Passage) {
+	return passage.type === 'data';
+}
+
 export function passageWithId(
 	stories: Story[],
 	storyId: string,
@@ -48,6 +56,12 @@ export function passageConnections(
 	connectionParser?: (text: string) => string[]
 ) {
 	const parser = connectionParser ?? ((text: string) => parseLinks(text, true));
+
+	// Data nodes can't link or be linked to, so they don't participate in
+	// connections at all.
+
+	passages = passages.filter(passage => !isDataNode(passage));
+
 	const passageMap = new Map(passages.map(p => [p.name, p]));
 	const result = {
 		draggable: {
@@ -160,7 +174,14 @@ export function storyPassageTags(story: Story) {
 }
 
 export function storyStats(story: Story) {
-	const links = story.passages.reduce<string[]>(
+	// Data nodes hold JSON, not story text, so they're left out of these
+	// stats--and because they can't be linked to, a link sharing a data node's
+	// name is broken.
+
+	const storyPassages = story.passages.filter(
+		passage => !isDataNode(passage)
+	);
+	const links = storyPassages.reduce<string[]>(
 		(links, passage) => [
 			...links,
 			...parseLinks(passage.text).filter(link => links.indexOf(link) === -1)
@@ -169,18 +190,18 @@ export function storyStats(story: Story) {
 	);
 
 	const brokenLinks = uniq(links).filter(
-		link => !story.passages.some(passage => passage.name === link)
+		link => !storyPassages.some(passage => passage.name === link)
 	);
 
 	return {
 		brokenLinks,
 		links,
-		characters: story.passages.reduce(
+		characters: storyPassages.reduce(
 			(count, passage) => count + passage.text.length,
 			0
 		),
-		passages: story.passages.length,
-		words: story.passages.reduce(
+		passages: storyPassages.length,
+		words: storyPassages.reduce(
 			(count, passage) => count + passage.text.split(/\s+/).length,
 			0
 		)

@@ -13,6 +13,13 @@ export const passageDefaults = (): Omit<Passage, 'id' | 'story'> => ({
 	width: 100
 });
 
+export const dataNodeDefaults = (): Omit<Passage, 'id' | 'story'> => ({
+	...passageDefaults(),
+	name: i18n.t('store.dataNodeDefaults.name'),
+	text: '{}',
+	type: 'data'
+});
+
 export const storyDefaults = (): Omit<Story, 'id'> => ({
 	ifid: '',
 	lastUpdate: new Date(),

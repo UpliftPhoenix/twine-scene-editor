@@ -114,6 +114,18 @@ describe('publishPassage()', () => {
 		expect(typeof result).toBe('string');
 		checkPassageElAgainstData(toDOM(result), passage);
 	});
+
+	it('adds a type attribute to data nodes only', () => {
+		const passage = fakePassage();
+		const dataNode = fakePassage({type: 'data'});
+
+		expect(toDOM(publish.publishPassage(passage, 1)).getAttribute('type')).toBe(
+			null
+		);
+		expect(
+			toDOM(publish.publishPassage(dataNode, 1)).getAttribute('type')
+		).toBe('data');
+	});
 });
 
 describe('publishStory()', () => {

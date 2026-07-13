@@ -45,7 +45,13 @@ export function createPassage(
 			passages: [...story.passages, newPassage]
 		};
 
-		if (newStory.passages.length === 1) {
+		// The first non-data passage in a story becomes its start passage. Data
+		// nodes can't be a start passage.
+
+		if (
+			newPassage.type !== 'data' &&
+			newStory.passages.filter(passage => passage.type !== 'data').length === 1
+		) {
 			newStory.startPassage = newPassage.id;
 		}
 

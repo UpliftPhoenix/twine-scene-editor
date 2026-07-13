@@ -1,23 +1,25 @@
 import {passageDefaults} from '../defaults';
-import {CreatePassageAction, Story} from '../stories.types';
+import {CreatePassageAction, Passage, Story} from '../stories.types';
 import {rectsIntersect} from '../../../util/geometry';
 import {unusedName} from '../../../util/unused-name';
 
 /**
  * Creates a new, untitled passage centered at a point in the story. This
  * automatically increments a number at the end of the passage name to ensure
- * it's unique.
+ * it's unique. Extra props (e.g. those of a data node) override the passage
+ * defaults; a `name` prop is used as the base name to make unique.
  */
 export function createUntitledPassage(
 	story: Story,
 	centerX: number,
-	centerY: number
+	centerY: number,
+	props: Partial<Passage> = {}
 ): CreatePassageAction {
 	if (!Number.isFinite(centerX) || !Number.isFinite(centerY)) {
 		throw new Error('Center must be a finite coordinate pair');
 	}
 
-	const defs = passageDefaults();
+	const defs = {...passageDefaults(), ...props};
 	const passageName = unusedName(
 		defs.name,
 		story.passages.map(passage => passage.name)
@@ -80,6 +82,7 @@ export function createUntitledPassage(
 		type: 'createPassage',
 		storyId: story.id,
 		props: {
+			...props,
 			...bounds,
 			story: story.id,
 			name: passageName
