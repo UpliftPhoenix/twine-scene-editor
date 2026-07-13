@@ -27,6 +27,12 @@ interface DataTemplateFieldBase {
 
 export interface DataTemplateStringField extends DataTemplateFieldBase {
 	default?: string;
+	/**
+	 * If set, the value must be one of these strings. The visual builder shows
+	 * a dropdown instead of a free text input, and the field defaults to the
+	 * first option unless `default` says otherwise.
+	 */
+	enum?: string[];
 	type: 'string';
 }
 
@@ -84,7 +90,11 @@ export const dataNodeTemplates: DataNodeTemplate[] = [
 		name: 'Item Reward',
 		silentValues: {},
 		fields: [
-			{name: 'category', type: 'string', default: ''},
+			{
+				name: 'category',
+				type: 'string',
+				enum: ['pets', 'gifts', 'toys', 'transport', 'food', 'stickers']
+			},
 			{name: 'kind', type: 'string', default: ''},
 			{name: 'amount', type: 'number', optional: true, default: 1, min: 1},
 			{
@@ -107,6 +117,27 @@ export const dataNodeTemplates: DataNodeTemplate[] = [
 		fields: [
 			{name: 'kind', type: 'string', default: ''},
 			{name: 'amount', type: 'number', default: 1, min: 1}
+		]
+	},
+	{
+		id: 'trigger',
+		name: 'Trigger',
+		silentValues: {},
+		fields: [
+			{
+				name: 'toast',
+				type: 'object',
+				optional: true,
+				fields: [
+					{name: 'name', type: 'string', default: ''},
+					{name: 'description', type: 'string', default: ''},
+					{
+						name: 'color',
+						type: 'string',
+						enum: ['pink', 'purple', 'blue', 'red', 'green', 'yellow', 'black']
+					}
+				]
+			}
 		]
 	}
 ];
@@ -146,7 +177,7 @@ function matchesFieldType(field: DataTemplateField, value: JsonValue | undefined
 export function templateFieldDefault(field: DataTemplateField): JsonValue {
 	switch (field.type) {
 		case 'string':
-			return field.default ?? '';
+			return field.default ?? field.enum?.[0] ?? '';
 		case 'number':
 			return field.default ?? field.min ?? 0;
 		case 'boolean':
@@ -261,7 +292,16 @@ function validateFields(
 			continue;
 		}
 
-		if (field.type === 'number') {
+		if (field.type === 'string') {
+			if (field.enum && !field.enum.includes(value as string)) {
+				errors.push({
+					message: `"${field.name}" must be one of ${field.enum
+						.map(option => JSON.stringify(option))
+						.join(', ')}`,
+					path: fieldPath
+				});
+			}
+		} else if (field.type === 'number') {
 			const number = value as number;
 
 			if (field.min !== undefined && number < field.min) {

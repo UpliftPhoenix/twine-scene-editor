@@ -133,6 +133,27 @@ const TemplateFieldRow: React.FC<TemplateFieldRowProps> = props => {
 							/>
 						))}
 					</div>
+				) : field.type === 'string' && field.enum && typeof value === 'string' ? (
+					<select
+						aria-label={t('dialogs.dataNodeEdit.builder.stringLabel')}
+						className="json-builder-enum"
+						onChange={event => onSetValue(fieldPath, event.target.value)}
+						value={value}
+					>
+						{/*
+						A value outside the allowed set (e.g. typed in the text view)
+						still has to render as the select's current value. Validation
+						flags it alongside.
+						*/}
+						{!field.enum.includes(value) && (
+							<option value={value}>{value}</option>
+						)}
+						{field.enum.map(option => (
+							<option key={option} value={option}>
+								{option}
+							</option>
+						))}
+					</select>
 				) : (
 					<JsonBuilderNode
 						onAppend={noop}

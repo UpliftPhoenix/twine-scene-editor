@@ -35,6 +35,12 @@ describe('templateFieldDefault()', () => {
 		expect(templateFieldDefault(amount)).toBe(1);
 	});
 
+	it('defaults enum fields to their first option', () => {
+		const category = itemReward.fields.find(({name}) => name === 'category')!;
+
+		expect(templateFieldDefault(category)).toBe('pets');
+	});
+
 	it('defaults booleans to their template default', () => {
 		const properties = itemReward.fields.find(
 			({name}) => name === 'properties'
@@ -62,7 +68,10 @@ describe('templateFieldDefault()', () => {
 
 describe('applyTemplate()', () => {
 	it('fills required fields with defaults from an empty value', () => {
-		expect(applyTemplate(itemReward, {})).toEqual({category: '', kind: ''});
+		expect(applyTemplate(itemReward, {})).toEqual({
+			category: 'pets',
+			kind: ''
+		});
 		expect(applyTemplate(currencyReward, {})).toEqual({kind: '', amount: 1});
 	});
 
@@ -88,9 +97,16 @@ describe('applyTemplate()', () => {
 
 	it('keeps optional fields that are present', () => {
 		expect(applyTemplate(itemReward, {kind: 'dog', amount: 3})).toEqual({
-			category: '',
+			category: 'pets',
 			kind: 'dog',
 			amount: 3
+		});
+	});
+
+	it('keeps out-of-enum strings so validation can flag them', () => {
+		expect(applyTemplate(itemReward, {category: 'misc', kind: 'x'})).toEqual({
+			category: 'misc',
+			kind: 'x'
 		});
 	});
 
@@ -167,6 +183,21 @@ describe('validateTemplateValue()', () => {
 		).toEqual([
 			{message: '"age" must be at most 6', path: ['properties', 'age']}
 		]);
+	});
+
+	it('enforces enum fields', () => {
+		expect(
+			validateTemplateValue(itemReward, {category: 'weapons', kind: 'sword'})
+		).toEqual([
+			{
+				message:
+					'"category" must be one of "pets", "gifts", "toys", "transport", "food", "stickers"',
+				path: ['category']
+			}
+		]);
+		expect(
+			validateTemplateValue(itemReward, {category: 'stickers', kind: 'star'})
+		).toEqual([]);
 	});
 
 	it('enforces field requirements', () => {
