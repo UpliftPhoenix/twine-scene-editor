@@ -301,6 +301,27 @@ describe('passageToTwee()', () => {
 		expect(passageFromTwee(passageToTwee(dataNode)).type).toBe('data');
 	});
 
+	it('includes template metadata for data nodes and round-trips it', () => {
+		const dataNode = fakePassage({
+			dataTemplate: 'item-reward',
+			name: 'mock-data-node',
+			tags: [],
+			text: '{"a": 1}',
+			type: 'data'
+		});
+		const roundTripped = passageFromTwee(passageToTwee(dataNode));
+
+		expect(passageToTwee(dataNode)).toContain('"template":"item-reward"');
+		expect(roundTripped.dataTemplate).toBe('item-reward');
+
+		// Passages never write or read template metadata.
+
+		const passage = fakePassage({dataTemplate: 'item-reward', tags: []});
+
+		expect(passageToTwee(passage)).not.toContain('template');
+		expect(passageFromTwee(passageToTwee(passage)).dataTemplate).toBeUndefined();
+	});
+
 	it('converts a passage with tags properly', () => {
 		const passage = fakePassage({
 			name: 'mock-passage',

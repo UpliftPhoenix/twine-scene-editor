@@ -2,10 +2,12 @@ import * as React from 'react';
 import {useTranslation} from 'react-i18next';
 import {DialogEditor} from '../../components/container/dialog-card';
 import {CodeArea} from '../../components/control/code-area';
-import {initJsonLintGlobally} from '../../codemirror/json-lint';
+import {templateAnnotations} from '../../codemirror/data-template-lint';
+import {initJsonLintGlobally, jsonAnnotations} from '../../codemirror/json-lint';
 import {usePrefsContext} from '../../store/prefs';
 import {Passage} from '../../store/stories';
 import {codeMirrorOptionsFromPrefs} from '../../util/codemirror-options';
+import {DataNodeTemplate} from '../../util/data-node-templates';
 
 // As in code-area.tsx, CodeMirror must be configured before the first render
 // so it picks up the lint helper properly.
@@ -15,6 +17,11 @@ initJsonLintGlobally();
 export interface DataNodeJsonEditorProps {
 	onChangeText: (value: string) => void;
 	passage: Passage;
+	/**
+	 * If set, the lint also checks the JSON against this template's fields and
+	 * constraints.
+	 */
+	template?: DataNodeTemplate;
 	value: string;
 }
 
@@ -24,7 +31,7 @@ export interface DataNodeJsonEditorProps {
  * is called on every change.
  */
 export const DataNodeJsonEditor: React.FC<DataNodeJsonEditorProps> = props => {
-	const {onChangeText, passage, value} = props;
+	const {onChangeText, passage, template, value} = props;
 	const {prefs} = usePrefsContext();
 	const {t} = useTranslation();
 
@@ -44,11 +51,18 @@ export const DataNodeJsonEditor: React.FC<DataNodeJsonEditorProps> = props => {
 			gutters: ['CodeMirror-lint-markers'],
 			lineNumbers: true,
 			lineWrapping: true,
-			lint: true,
+			lint: template
+				? {
+						getAnnotations: (text: string) => [
+							...jsonAnnotations(text),
+							...templateAnnotations(text, template)
+						]
+				  }
+				: true,
 			mode: {name: 'javascript', json: true},
 			placeholder: t('dialogs.dataNodeEdit.jsonPlaceholder')
 		}),
-		[prefs, t]
+		[prefs, t, template]
 	);
 
 	return (

@@ -192,7 +192,10 @@ export function validateJson(text: string): JsonValidationError | undefined {
 /**
  * Converts a character offset in text to a CodeMirror position.
  */
-function positionFromOffset(text: string, offset: number): CodeMirror.Position {
+export function positionFromOffset(
+	text: string,
+	offset: number
+): CodeMirror.Position {
 	const beforeError = text.substring(0, offset);
 	const line = (beforeError.match(/\n/g) ?? []).length;
 	const ch = offset - (beforeError.lastIndexOf('\n') + 1);

@@ -14,6 +14,11 @@ export type PassageNodeType = 'passage' | 'data';
  */
 export interface Passage {
 	/**
+	 * ID of the data node template this passage's JSON follows, if any. Only
+	 * meaningful when `type` is `'data'`. See util/data-node-templates.ts.
+	 */
+	dataTemplate?: string;
+	/**
 	 * Height of the passage in pixels.
 	 */
 	height: number;

@@ -2,23 +2,9 @@
 // immutable--they return a new root value and never mutate their input, so
 // results can flow directly into React state.
 
-export interface JsonObject {
-	[key: string]: JsonValue;
-}
+import {JsonObject, JsonPath, JsonValue} from '../../../util/json';
 
-export type JsonValue =
-	| string
-	| number
-	| boolean
-	| null
-	| JsonValue[]
-	| JsonObject;
-
-/**
- * A path from the root value to a nested value: object keys and array
- * indexes. An empty path is the root itself.
- */
-export type JsonPath = (string | number)[];
+export type {JsonObject, JsonPath, JsonValue} from '../../../util/json';
 
 export type JsonValueType =
 	| 'array'

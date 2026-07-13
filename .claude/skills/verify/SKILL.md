@@ -33,7 +33,8 @@ description: How to build, launch, and drive this Twine fork to verify changes e
 - Tag popover input is a combobox (datalist), so use `getByLabel('Tag Name')`,
   not `getByRole('textbox')`.
 - MenuButton menus can leave more than one popover mounted mid-transition;
-  disambiguate menu items with `.last()`.
+  disambiguate menu items with `.last()`. Checkable menu items (e.g. the data
+  node Template menu) match `getByRole('checkbox', {name})`, not button.
 - File exports use file-saver; capture with `page.waitForEvent('download')`
   and `download.saveAs(...)`.
 - HTML5 drag-and-drop (e.g. JSON builder palette) works with

@@ -1,8 +1,9 @@
-import {IconCode, IconLayoutGrid} from '@tabler/icons';
+import {IconCode, IconLayoutGrid, IconTemplate} from '@tabler/icons';
 import * as React from 'react';
 import {useTranslation} from 'react-i18next';
 import {ButtonBar} from '../../components/container/button-bar';
 import {IconButton} from '../../components/control/icon-button';
+import {MenuButton} from '../../components/control/menu-button';
 import {RenamePassageButton} from '../../components/passage/rename-passage-button';
 import {TagCardButton} from '../../components/tag/tag-card-button';
 import {
@@ -16,12 +17,20 @@ import {
 } from '../../store/stories';
 import {useUndoableStoriesContext} from '../../store/undoable-stories';
 import {Color} from '../../util/color';
+import {
+	applyTemplate,
+	dataNodeTemplate,
+	dataNodeTemplates
+} from '../../util/data-node-templates';
+import {JsonValue} from '../../util/json';
 import {DataNodeJsonEditor} from './data-node-json-editor';
 import {JsonBuilder} from './json-builder';
+import {TemplateJsonBuilder} from './json-builder/template-json-builder';
 
 export interface DataNodeEditContentsProps {
 	localText: string;
 	onChangeLocalText: (text: string) => void;
+	onChangeTemplate: (dataTemplate: string | undefined, text: string) => void;
 	passage: Passage;
 	story: Story;
 }
@@ -29,11 +38,13 @@ export interface DataNodeEditContentsProps {
 export const DataNodeEditContents: React.FC<
 	DataNodeEditContentsProps
 > = props => {
-	const {localText, onChangeLocalText, passage, story} = props;
+	const {localText, onChangeLocalText, onChangeTemplate, passage, story} =
+		props;
 	const [view, setView] = React.useState<'text' | 'visual'>('visual');
 	const {dispatch} = useUndoableStoriesContext();
 	const {t} = useTranslation();
 	const passageTags = storyPassageTags(story);
+	const template = dataNodeTemplate(passage.dataTemplate);
 
 	function handleAddTag(name: string) {
 		dispatch(addPassageTag(story, passage, name), t('undoChange.addTag'));
@@ -57,6 +68,37 @@ export const DataNodeEditContents: React.FC<
 		);
 	}
 
+	function handleSelectTemplate(id: string | undefined) {
+		if (id === passage.dataTemplate) {
+			return;
+		}
+
+		if (!id) {
+			// Clearing the template keeps the text as-is.
+
+			onChangeTemplate(undefined, localText);
+			return;
+		}
+
+		// Auto-fill the node from its current contents: values the template knows
+		// are kept, required fields are added with defaults, and the rest is
+		// dropped.
+
+		const selected = dataNodeTemplate(id)!;
+		let parsed: JsonValue = {};
+
+		try {
+			parsed = JSON.parse(localText.trim() === '' ? '{}' : localText);
+		} catch (error) {
+			// Malformed JSON is treated as an empty node.
+		}
+
+		onChangeTemplate(
+			id,
+			JSON.stringify(applyTemplate(selected, parsed), null, 2)
+		);
+	}
+
 	return (
 		<>
 			<ButtonBar>
@@ -73,6 +115,24 @@ export const DataNodeEditContents: React.FC<
 					onRename={handleRename}
 					passage={passage}
 					story={story}
+				/>
+				<MenuButton
+					icon={<IconTemplate />}
+					items={[
+						{
+							checkable: true,
+							checked: !template,
+							label: t('dialogs.dataNodeEdit.templateNone'),
+							onClick: () => handleSelectTemplate(undefined)
+						},
+						...dataNodeTemplates.map(candidate => ({
+							checkable: true as const,
+							checked: template?.id === candidate.id,
+							label: candidate.name,
+							onClick: () => handleSelectTemplate(candidate.id)
+						}))
+					]}
+					label={template?.name ?? t('dialogs.dataNodeEdit.template')}
 				/>
 				<IconButton
 					icon={<IconLayoutGrid />}
@@ -93,6 +153,13 @@ export const DataNodeEditContents: React.FC<
 				<DataNodeJsonEditor
 					onChangeText={onChangeLocalText}
 					passage={passage}
+					template={template}
+					value={localText}
+				/>
+			) : template ? (
+				<TemplateJsonBuilder
+					onChange={onChangeLocalText}
+					template={template}
 					value={localText}
 				/>
 			) : (

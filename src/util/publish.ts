@@ -51,9 +51,10 @@ export function publishArchive(stories: Story[], appInfo: AppInfo) {
  * passages are numbered sequentially in published stories, not with a UUID.
  */
 export function publishPassage(passage: Passage, localId: number) {
-	// The type attribute isn't part of the Twine 2 HTML output spec and is
-	// ignored by story formats, but it's how data nodes survive publish/import
-	// round trips (which is how the desktop app persists stories).
+	// The type and template attributes aren't part of the Twine 2 HTML output
+	// spec and are ignored by story formats, but they're how data nodes survive
+	// publish/import round trips (which is how the desktop app persists
+	// stories).
 
 	return (
 		`<tw-passagedata pid="${escape(localId.toString())}" ` +
@@ -62,6 +63,9 @@ export function publishPassage(passage: Passage, localId: number) {
 		`position="${passage.left},${passage.top}" ` +
 		`size="${passage.width},${passage.height}"` +
 		(passage.type === 'data' ? ` type="data"` : '') +
+		(passage.type === 'data' && passage.dataTemplate
+			? ` template="${escape(passage.dataTemplate)}"`
+			: '') +
 		`>` +
 		`${escape(passage.text)}</tw-passagedata>`
 	);

@@ -1,5 +1,6 @@
 import {Passage, Story} from '../store/stories';
 import {AppInfo} from './app-info';
+import {dataNodeTemplate, mergeSilentValues} from './data-node-templates';
 
 // This module converts a story to JSON matching the output of the Twine to
 // JSON project (https://jtschoonhoven.github.io/twine-to-json/), so that files
@@ -332,7 +333,9 @@ function passageToJson(
 
 /**
  * Converts a single data node to its JSON representation. Like passages, data
- * nodes are identified by a sequential numeric ID, not their UUID.
+ * nodes are identified by a sequential numeric ID, not their UUID. If the
+ * node follows a template, the template's silent values are merged into its
+ * data here--they're part of the export but never shown in the editor.
  */
 function dataNodeToJson(passage: Passage, localId: number): JsonDataNode {
 	let data: unknown = passage.text;
@@ -341,6 +344,12 @@ function dataNodeToJson(passage: Passage, localId: number): JsonDataNode {
 		data = JSON.parse(passage.text);
 	} catch (error) {
 		// The node's text isn't valid JSON, so export it as raw text.
+	}
+
+	const template = dataNodeTemplate(passage.dataTemplate);
+
+	if (template) {
+		data = mergeSilentValues(template, data);
 	}
 
 	return {

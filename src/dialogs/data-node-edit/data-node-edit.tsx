@@ -96,6 +96,30 @@ const InnerDataNodeEditDialog: React.FC<DataNodeEditDialogProps> = props => {
 		}
 	}, [commitText]);
 
+	const handleChangeTemplate = React.useCallback(
+		(dataTemplate: string | undefined, text: string) => {
+			// Choosing a template rewrites the text, so cancel any pending debounced
+			// text commit and store both changes as one undoable update.
+
+			if (pendingTimeout.current) {
+				window.clearTimeout(pendingTimeout.current);
+				pendingTimeout.current = undefined;
+			}
+
+			setLocalText(text);
+			dispatch(
+				updatePassage(
+					story,
+					passage,
+					{dataTemplate, text},
+					{dontUpdateOthers: true}
+				),
+				t('undoChange.changeDataNodeTemplate')
+			);
+		},
+		[dispatch, passage, story, t]
+	);
+
 	return (
 		<DialogCard
 			{...other}
@@ -112,6 +136,7 @@ const InnerDataNodeEditDialog: React.FC<DataNodeEditDialogProps> = props => {
 			<DataNodeEditContents
 				localText={localText}
 				onChangeLocalText={handleLocalTextChange}
+				onChangeTemplate={handleChangeTemplate}
 				passage={passage}
 				story={story}
 			/>

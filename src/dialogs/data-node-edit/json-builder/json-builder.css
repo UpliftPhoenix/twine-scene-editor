@@ -166,6 +166,75 @@ control height, every row gets what looks like extra bottom padding.
 	padding-top: calc(var(--grid-size) / 4);
 }
 
+/*
+Template mode: one row per template field, with a presence toggle instead of
+add/remove controls.
+*/
+
+.template-builder-rows {
+	display: flex;
+	flex-direction: column;
+	gap: calc(var(--grid-size) / 2);
+}
+
+.template-builder-toggle {
+	flex-shrink: 0;
+	margin: 0;
+	margin-top: calc(var(--grid-size) / 4);
+}
+
+.template-builder-key {
+	flex-shrink: 0;
+	font-family: var(--font-monospaced);
+	font-size: 90%;
+	min-width: 8em;
+	padding-top: calc(var(--grid-size) / 4);
+}
+
+.template-builder-missing .template-builder-key {
+	color: var(--red);
+}
+
+.template-builder-container {
+	border-left-color: var(--green);
+}
+
+.template-builder-hint {
+	color: var(--gray);
+	font-size: 85%;
+	font-style: italic;
+	padding-top: calc(var(--grid-size) / 4);
+}
+
+.template-builder-range {
+	color: var(--gray);
+	font-family: var(--font-monospaced);
+	font-size: 85%;
+	padding-top: calc(var(--grid-size) / 4);
+}
+
+.template-builder-error {
+	color: var(--red);
+	font-size: 85%;
+	padding-top: calc(var(--grid-size) / 4);
+}
+
+.template-builder-unknown .template-builder-key {
+	color: var(--gray);
+	text-decoration: line-through;
+}
+
+.template-builder-unknown-value {
+	color: var(--gray);
+	font-family: var(--font-monospaced);
+	font-size: 85%;
+	max-width: 12em;
+	overflow: hidden;
+	padding-top: calc(var(--grid-size) / 4);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
 .json-builder-invalid {
 	color: var(--gray);
 	margin: auto;

@@ -126,6 +126,25 @@ describe('publishPassage()', () => {
 			toDOM(publish.publishPassage(dataNode, 1)).getAttribute('type')
 		).toBe('data');
 	});
+
+	it('adds a template attribute to data nodes with a template only', () => {
+		const passage = fakePassage({dataTemplate: 'item-reward'});
+		const dataNode = fakePassage({type: 'data'});
+		const templatedNode = fakePassage({
+			dataTemplate: 'item-reward',
+			type: 'data'
+		});
+
+		expect(
+			toDOM(publish.publishPassage(passage, 1)).getAttribute('template')
+		).toBe(null);
+		expect(
+			toDOM(publish.publishPassage(dataNode, 1)).getAttribute('template')
+		).toBe(null);
+		expect(
+			toDOM(publish.publishPassage(templatedNode, 1)).getAttribute('template')
+		).toBe('item-reward');
+	});
 });
 
 describe('publishStory()', () => {

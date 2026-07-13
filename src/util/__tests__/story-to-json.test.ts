@@ -71,6 +71,32 @@ describe('storyToJsonData()', () => {
 
 			expect(storyToJsonData(story, appInfo).data[0].data).toBe('{oops');
 		});
+
+		it("merges a data node's template silent values into its exported data", () => {
+			const story = fakeStory(1);
+
+			story.passages[0].type = 'data';
+			story.passages[0].dataTemplate = 'currency-reward';
+			story.passages[0].text = '{"kind": "gems", "amount": 5}';
+
+			expect(storyToJsonData(story, appInfo).data[0].data).toEqual({
+				category: 'currency',
+				kind: 'gems',
+				amount: 5
+			});
+		});
+
+		it('exports data nodes with an unknown template as-is', () => {
+			const story = fakeStory(1);
+
+			story.passages[0].type = 'data';
+			story.passages[0].dataTemplate = 'no-such-template';
+			story.passages[0].text = '{"kind": "gems"}';
+
+			expect(storyToJsonData(story, appInfo).data[0].data).toEqual({
+				kind: 'gems'
+			});
+		});
 	});
 
 	it('assigns passages sequential string IDs and space-separated tags', () => {

@@ -117,6 +117,10 @@ function domToObject(storyEl: Element): ImportedStory {
 				text: passageEl.textContent ?? undefined,
 				...(passageEl.getAttribute('type') === 'data'
 					? {type: 'data' as const}
+					: {}),
+				...(passageEl.getAttribute('type') === 'data' &&
+				passageEl.getAttribute('template')
+					? {dataTemplate: passageEl.getAttribute('template')!}
 					: {})
 			};
 		})

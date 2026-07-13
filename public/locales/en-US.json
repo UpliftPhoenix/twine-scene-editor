@@ -172,13 +172,19 @@
 			"builder": {
 				"booleanLabel": "Boolean Value",
 				"dropHint": "Drag a type here from the palette above, or use the add button.",
+				"includeField": "Include \"{{name}}\"",
 				"invalidJson": "This data node's JSON has errors. Fix them in the text view to use the visual builder.",
 				"itemCount": "{{count}} item",
 				"itemCount_plural": "{{count}} items",
 				"keyLabel": "Key",
+				"missingRequired": "Required—check the box to restore it.",
+				"notIncluded": "Not included",
+				"notInTemplate": "Not part of this template.",
 				"numberLabel": "Number Value",
 				"paletteHint": "Drag a type onto an object or array below to add a value.",
+				"requiresHint": "Available when {{field}} is {{value}}.",
 				"stringLabel": "String Value",
+				"templateNotObject": "This data node's template requires its contents to be a JSON object. Fix this in the text view.",
 				"types": {
 					"array": "Array",
 					"boolean": "Boolean",
@@ -190,6 +196,8 @@
 			},
 			"editorLabel": "Data Node JSON",
 			"jsonPlaceholder": "Enter this data node's contents here, in JSON format.",
+			"template": "Template",
+			"templateNone": "None",
 			"textView": "JSON Text",
 			"visualView": "Visual Builder"
 		},
@@ -471,6 +479,7 @@
 	},
 	"undoChange": {
 		"addTag": "Add Tag",
+		"changeDataNodeTemplate": "Change Data Node Template",
 		"changeTagColor": "Change Tag Color",
 		"editDataNode": "Edit Data Node",
 		"newDataNode": "New Data Node",
