@@ -37,6 +37,11 @@ export interface JsonDataNode {
 	tags: string;
 	id: string;
 	/**
+	 * ID of the template the node follows, if any. Omitted for nodes without a
+	 * template or whose template no longer exists.
+	 */
+	templateId?: string;
+	/**
 	 * The node's parsed JSON contents. If the node's text isn't valid JSON,
 	 * this is the raw text instead.
 	 */
@@ -356,6 +361,7 @@ function dataNodeToJson(passage: Passage, localId: number): JsonDataNode {
 		name: passage.name,
 		tags: passage.tags.join(' '),
 		id: localId.toString(),
+		...(template ? {templateId: template.id} : {}),
 		data
 	};
 }

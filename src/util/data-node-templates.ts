@@ -115,7 +115,11 @@ export const dataNodeTemplates: DataNodeTemplate[] = [
 		name: 'Currency Reward',
 		silentValues: {category: 'currency'},
 		fields: [
-			{name: 'kind', type: 'string', default: ''},
+			{
+				name: 'kind',
+				type: 'string',
+				enum: ['money', 'alt_currency']
+			},
 			{name: 'amount', type: 'number', default: 1, min: 1}
 		]
 	},

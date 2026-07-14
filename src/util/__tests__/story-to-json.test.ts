@@ -97,6 +97,33 @@ describe('storyToJsonData()', () => {
 				kind: 'gems'
 			});
 		});
+
+		it("exports a data node's template ID as templateId", () => {
+			const story = fakeStory(1);
+
+			story.passages[0].type = 'data';
+			story.passages[0].dataTemplate = 'currency-reward';
+			story.passages[0].text = '{"kind": "gems", "amount": 5}';
+
+			expect(storyToJsonData(story, appInfo).data[0].templateId).toBe(
+				'currency-reward'
+			);
+		});
+
+		it('omits templateId for data nodes without a template or with an unknown template', () => {
+			const story = fakeStory(2);
+
+			story.passages[0].type = 'data';
+			story.passages[0].text = '{"kind": "gems"}';
+			story.passages[1].type = 'data';
+			story.passages[1].dataTemplate = 'no-such-template';
+			story.passages[1].text = '{"kind": "gems"}';
+
+			const result = storyToJsonData(story, appInfo);
+
+			expect(result.data[0]).not.toHaveProperty('templateId');
+			expect(result.data[1]).not.toHaveProperty('templateId');
+		});
 	});
 
 	it('assigns passages sequential string IDs and space-separated tags', () => {
