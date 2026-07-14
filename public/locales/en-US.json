@@ -497,7 +497,8 @@
 		"newTemplateNode": {
 			"npc": "New NPC Node",
 			"trigger": "New Trigger Node",
-			"requirement": "New Requirement Node"
+			"requirement": "New Requirement Node",
+			"setpiece": "New Setpiece Node"
 		},
 		"renameDataNode": "Rename Data Node",
 		"deletePassage": "Delete Passage",

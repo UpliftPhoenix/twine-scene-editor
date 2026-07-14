@@ -11,6 +11,7 @@ import {JsonObject, JsonPath, JsonValue} from './json';
 import npcPortrait from './npc-portrait.png';
 import requirementIcon from './requirement-icon.png';
 import triggerIcon from './trigger-icon.png';
+import setpieceIcon from './setpiece-icon.png';
 
 /**
  * A condition on a sibling field: it must either equal or not equal a value.
@@ -271,6 +272,15 @@ export const dataNodeTemplates: DataNodeTemplate[] = [
 		nameOnly: true,
 		cardImage: npcPortrait,
 		color: '#18ff50',
+		fields: []
+	},
+	{
+		id: 'setpiece',
+		name: 'Setpiece',
+		silentValues: {},
+		nameOnly: true,
+		cardImage: setpieceIcon,
+		color: '#ff5628',
 		fields: []
 	}
 ];
