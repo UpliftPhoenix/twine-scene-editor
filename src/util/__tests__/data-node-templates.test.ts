@@ -1,5 +1,6 @@
 import {
 	applyTemplate,
+	DataNodeTemplate,
 	dataNodeTemplate,
 	dataNodeTemplates,
 	mergeSilentValues,
@@ -9,6 +10,34 @@ import {
 
 const itemReward = dataNodeTemplate('item-reward')!;
 const currencyReward = dataNodeTemplate('currency-reward')!;
+
+// A synthetic template exercising array fields: an array of objects and an
+// optional array of bounded numbers.
+
+const arrayTemplate: DataNodeTemplate = {
+	id: 'test-array',
+	name: 'Test Array',
+	silentValues: {},
+	fields: [
+		{
+			name: 'rewards',
+			type: 'array',
+			item: {
+				type: 'object',
+				fields: [
+					{name: 'kind', type: 'string', enum: ['money', 'gems']},
+					{name: 'amount', type: 'number', min: 1, default: 1}
+				]
+			}
+		},
+		{
+			name: 'scores',
+			type: 'array',
+			optional: true,
+			item: {type: 'number', min: 0, max: 10}
+		}
+	]
+};
 
 describe('dataNodeTemplate()', () => {
 	it('finds templates by ID', () => {
@@ -55,6 +84,25 @@ describe('templateFieldDefault()', () => {
 		expect(templateFieldDefault(neon)).toBe(true);
 	});
 
+	it('defaults array fields to an empty array', () => {
+		const rewards = arrayTemplate.fields.find(({name}) => name === 'rewards')!;
+
+		expect(templateFieldDefault(rewards)).toEqual([]);
+	});
+
+	it('defaults array items from their item template', () => {
+		const rewards = arrayTemplate.fields.find(({name}) => name === 'rewards')!;
+
+		if (rewards.type !== 'array') {
+			throw new Error('rewards should be an array field');
+		}
+
+		expect(templateFieldDefault(rewards.item)).toEqual({
+			kind: 'money',
+			amount: 1
+		});
+	});
+
 	it('defaults object fields to their required subfields only', () => {
 		const properties = itemReward.fields.find(
 			({name}) => name === 'properties'
@@ -72,12 +120,15 @@ describe('applyTemplate()', () => {
 			category: 'pets',
 			kind: ''
 		});
-		expect(applyTemplate(currencyReward, {})).toEqual({kind: '', amount: 1});
+		expect(applyTemplate(currencyReward, {})).toEqual({
+			kind: 'money',
+			amount: 1
+		});
 	});
 
 	it('treats non-object values as empty', () => {
 		expect(applyTemplate(currencyReward, 'oops')).toEqual({
-			kind: '',
+			kind: 'money',
 			amount: 1
 		});
 	});
@@ -90,7 +141,7 @@ describe('applyTemplate()', () => {
 
 	it('replaces existing values whose type does not match', () => {
 		expect(applyTemplate(currencyReward, {kind: 5, amount: 10})).toEqual({
-			kind: '',
+			kind: 'money',
 			amount: 10
 		});
 	});
@@ -120,6 +171,35 @@ describe('applyTemplate()', () => {
 		).toEqual({category: 'pets', kind: 'dog', properties: {age: 2}});
 	});
 
+	it('fills required array fields with an empty array', () => {
+		expect(applyTemplate(arrayTemplate, {})).toEqual({rewards: []});
+	});
+
+	it('conforms each array item to the item template', () => {
+		expect(
+			applyTemplate(arrayTemplate, {
+				rewards: [
+					{kind: 'gems', amount: 5, junk: true},
+					{kind: 'money'},
+					'oops'
+				]
+			})
+		).toEqual({
+			rewards: [
+				{kind: 'gems', amount: 5},
+				{kind: 'money', amount: 1},
+				{kind: 'money', amount: 1}
+			]
+		});
+	});
+
+	it('keeps optional array fields that are present', () => {
+		expect(applyTemplate(arrayTemplate, {scores: [3, 7]})).toEqual({
+			rewards: [],
+			scores: [3, 7]
+		});
+	});
+
 	it('drops optional fields whose requirement is not met', () => {
 		expect(
 			applyTemplate(itemReward, {
@@ -137,7 +217,7 @@ describe('validateTemplateValue()', () => {
 			validateTemplateValue(itemReward, {category: 'toys', kind: 'ball'})
 		).toEqual([]);
 		expect(
-			validateTemplateValue(currencyReward, {kind: 'gems', amount: 5})
+			validateTemplateValue(currencyReward, {kind: 'money', amount: 5})
 		).toEqual([]);
 	});
 
@@ -166,13 +246,13 @@ describe('validateTemplateValue()', () => {
 
 	it('reports type mismatches', () => {
 		expect(
-			validateTemplateValue(currencyReward, {kind: 'gems', amount: 'lots'})
+			validateTemplateValue(currencyReward, {kind: 'money', amount: 'lots'})
 		).toEqual([{message: '"amount" must be a number', path: ['amount']}]);
 	});
 
 	it('enforces minimums and maximums on numbers', () => {
 		expect(
-			validateTemplateValue(currencyReward, {kind: 'gems', amount: 0})
+			validateTemplateValue(currencyReward, {kind: 'money', amount: 0})
 		).toEqual([{message: '"amount" must be at least 1', path: ['amount']}]);
 		expect(
 			validateTemplateValue(itemReward, {
@@ -237,11 +317,71 @@ describe('validateTemplateValue()', () => {
 		);
 	});
 
+	it('accepts valid array fields and items', () => {
+		expect(
+			validateTemplateValue(arrayTemplate, {
+				rewards: [{kind: 'money', amount: 2}],
+				scores: [0, 10]
+			})
+		).toEqual([]);
+		expect(validateTemplateValue(arrayTemplate, {rewards: []})).toEqual([]);
+	});
+
+	it('rejects non-array values for array fields', () => {
+		expect(
+			validateTemplateValue(arrayTemplate, {rewards: {kind: 'money'}})
+		).toEqual([{message: '"rewards" must be an array', path: ['rewards']}]);
+	});
+
+	it('validates each array item against the item template', () => {
+		expect(
+			validateTemplateValue(arrayTemplate, {
+				rewards: [],
+				scores: [5, 'high', 20]
+			})
+		).toEqual([
+			{
+				message: 'item 2 of "scores" must be a number',
+				path: ['scores', 1]
+			},
+			{
+				message: 'item 3 of "scores" must be at most 10',
+				path: ['scores', 2]
+			}
+		]);
+	});
+
+	it('validates object array items recursively', () => {
+		expect(
+			validateTemplateValue(arrayTemplate, {
+				rewards: [
+					{kind: 'money', amount: 1},
+					{amount: 0, junk: true}
+				]
+			})
+		).toEqual(
+			expect.arrayContaining([
+				{
+					message: 'Missing required field "kind"',
+					path: ['rewards', 1]
+				},
+				{
+					message: '"amount" must be at least 1',
+					path: ['rewards', 1, 'amount']
+				},
+				{
+					message: `"junk" isn't part of the Test Array template`,
+					path: ['rewards', 1, 'junk']
+				}
+			])
+		);
+	});
+
 	it('flags silent fields entered by hand', () => {
 		expect(
 			validateTemplateValue(currencyReward, {
 				category: 'currency',
-				kind: 'gems',
+				kind: 'money',
 				amount: 1
 			})
 		).toEqual([

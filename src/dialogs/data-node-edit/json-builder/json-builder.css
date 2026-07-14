@@ -219,6 +219,15 @@ add/remove controls.
 	padding-top: calc(var(--grid-size) / 4);
 }
 
+.template-builder-item {
+	align-items: flex-start;
+}
+
+.template-builder-add-item .icon-button {
+	height: auto;
+	padding: 1px calc(var(--grid-size) / 2);
+}
+
 .template-builder-unknown .template-builder-key {
 	color: var(--gray);
 	text-decoration: line-through;

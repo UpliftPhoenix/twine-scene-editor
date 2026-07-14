@@ -56,11 +56,33 @@ export interface DataTemplateObjectField extends DataTemplateFieldBase {
 	type: 'object';
 }
 
+export interface DataTemplateArrayField extends DataTemplateFieldBase {
+	/**
+	 * Template every item in the array must follow. In the visual builder,
+	 * users add and remove copies of this item and edit each one individually.
+	 */
+	item: DataTemplateArrayItem;
+	type: 'array';
+}
+
 export type DataTemplateField =
 	| DataTemplateStringField
 	| DataTemplateNumberField
 	| DataTemplateBooleanField
-	| DataTemplateObjectField;
+	| DataTemplateObjectField
+	| DataTemplateArrayField;
+
+/**
+ * The template for a single array item: a field definition without a name
+ * (position identifies items) and without presence flags--an item is either
+ * in the array or it isn't, so `optional` and `requires` don't apply.
+ */
+export type DataTemplateArrayItem =
+	| Omit<DataTemplateStringField, 'name' | 'optional' | 'requires'>
+	| Omit<DataTemplateNumberField, 'name' | 'optional' | 'requires'>
+	| Omit<DataTemplateBooleanField, 'name' | 'optional' | 'requires'>
+	| Omit<DataTemplateObjectField, 'name' | 'optional' | 'requires'>
+	| Omit<DataTemplateArrayField, 'name' | 'optional' | 'requires'>;
 
 export interface DataNodeTemplate {
 	/**
@@ -143,6 +165,43 @@ export const dataNodeTemplates: DataNodeTemplate[] = [
 				]
 			}
 		]
+	},
+	{
+		id: 'requirement',
+		name: 'Requirement',
+		silentValues: {},
+		fields: [
+			{
+				name: 'type',
+				type: 'string',
+				enum: ['item_owned', 'item_discovered', 'item_equipped']
+			},
+			{
+				name: 'items',
+				type: 'array',
+				item: {
+					type: 'object',
+					fields: [
+						{
+							name: 'category',
+							type: 'string',
+							enum: ['pets', 'gifts', 'toys', 'transport', 'food', 'stickers']
+						},
+						{name: 'kind', type: 'string', optional: true, default: ''},
+						{
+							name: 'properties',
+							type: 'object',
+							optional: true,
+							requires: {field: 'category', equals: 'pets'},
+							fields: [
+								{name: 'neon', type: 'boolean', optional: true, default: true},
+								{name: 'mega_neon', type: 'boolean', optional: true, default: true}
+							]
+						}
+					]
+				}
+			}
+		]
 	}
 ];
 
@@ -161,7 +220,10 @@ function isJsonObject(value: JsonValue | undefined): value is JsonObject {
 	return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-function matchesFieldType(field: DataTemplateField, value: JsonValue | undefined) {
+function matchesFieldType(
+	field: DataTemplateField | DataTemplateArrayItem,
+	value: JsonValue | undefined
+) {
 	switch (field.type) {
 		case 'string':
 			return typeof value === 'string';
@@ -171,14 +233,19 @@ function matchesFieldType(field: DataTemplateField, value: JsonValue | undefined
 			return typeof value === 'boolean';
 		case 'object':
 			return isJsonObject(value);
+		case 'array':
+			return Array.isArray(value);
 	}
 }
 
 /**
  * Returns the value a field starts with when it's filled in or toggled on.
- * Object fields start with their required subfields, recursively.
+ * Object fields start with their required subfields, recursively; array
+ * fields start empty. Also used for newly-added array items.
  */
-export function templateFieldDefault(field: DataTemplateField): JsonValue {
+export function templateFieldDefault(
+	field: DataTemplateField | DataTemplateArrayItem
+): JsonValue {
 	switch (field.type) {
 		case 'string':
 			return field.default ?? field.enum?.[0] ?? '';
@@ -188,7 +255,34 @@ export function templateFieldDefault(field: DataTemplateField): JsonValue {
 			return field.default ?? false;
 		case 'object':
 			return applyTemplateFields(field.fields, undefined);
+		case 'array':
+			return [];
 	}
+}
+
+/**
+ * Auto-fills a single array item to conform to its template, recursively.
+ * Items whose type doesn't match are replaced with the item default.
+ */
+function applyItemTemplate(
+	item: DataTemplateArrayItem,
+	value: JsonValue
+): JsonValue {
+	if (!matchesFieldType(item, value)) {
+		return templateFieldDefault(item);
+	}
+
+	if (item.type === 'object') {
+		return applyTemplateFields(item.fields, value as JsonObject);
+	}
+
+	if (item.type === 'array') {
+		return (value as JsonValue[]).map(element =>
+			applyItemTemplate(item.item, element)
+		);
+	}
+
+	return value;
 }
 
 function applyTemplateFields(
@@ -204,6 +298,10 @@ function applyTemplateFields(
 			result[field.name] =
 				field.type === 'object'
 					? applyTemplateFields(field.fields, existingValue as JsonObject)
+					: field.type === 'array'
+					? (existingValue as JsonValue[]).map(element =>
+							applyItemTemplate(field.item, element)
+					  )
 					: (existingValue as JsonValue);
 		} else if (!field.optional) {
 			result[field.name] = templateFieldDefault(field);
@@ -250,8 +348,69 @@ export interface DataTemplateError {
 	path: JsonPath;
 }
 
-function fieldTypeName(field: DataTemplateField) {
-	return field.type === 'object' ? 'an object' : `a ${field.type}`;
+function fieldTypeName(field: DataTemplateField | DataTemplateArrayItem) {
+	return field.type === 'object' || field.type === 'array'
+		? `an ${field.type}`
+		: `a ${field.type}`;
+}
+
+/**
+ * Checks a single value against a field or array item template. `label` names
+ * the value in messages, e.g. `"amount"` or `item 2 of "rewards"`.
+ */
+function validateValue(
+	field: DataTemplateField | DataTemplateArrayItem,
+	value: JsonValue,
+	label: string,
+	path: JsonPath,
+	template: DataNodeTemplate,
+	errors: DataTemplateError[]
+) {
+	if (!matchesFieldType(field, value)) {
+		errors.push({
+			message: `${label} must be ${fieldTypeName(field)}`,
+			path
+		});
+		return;
+	}
+
+	if (field.type === 'string') {
+		if (field.enum && !field.enum.includes(value as string)) {
+			errors.push({
+				message: `${label} must be one of ${field.enum
+					.map(option => JSON.stringify(option))
+					.join(', ')}`,
+				path
+			});
+		}
+	} else if (field.type === 'number') {
+		const number = value as number;
+
+		if (field.min !== undefined && number < field.min) {
+			errors.push({
+				message: `${label} must be at least ${field.min}`,
+				path
+			});
+		} else if (field.max !== undefined && number > field.max) {
+			errors.push({
+				message: `${label} must be at most ${field.max}`,
+				path
+			});
+		}
+	} else if (field.type === 'object') {
+		validateFields(field.fields, value as JsonObject, path, template, errors);
+	} else if (field.type === 'array') {
+		(value as JsonValue[]).forEach((element, index) => {
+			validateValue(
+				field.item,
+				element,
+				`item ${index + 1} of ${label}`,
+				[...path, index],
+				template,
+				errors
+			);
+		});
+	}
 }
 
 function validateFields(
@@ -288,40 +447,14 @@ function validateFields(
 			});
 		}
 
-		if (!matchesFieldType(field, value)) {
-			errors.push({
-				message: `"${field.name}" must be ${fieldTypeName(field)}`,
-				path: fieldPath
-			});
-			continue;
-		}
-
-		if (field.type === 'string') {
-			if (field.enum && !field.enum.includes(value as string)) {
-				errors.push({
-					message: `"${field.name}" must be one of ${field.enum
-						.map(option => JSON.stringify(option))
-						.join(', ')}`,
-					path: fieldPath
-				});
-			}
-		} else if (field.type === 'number') {
-			const number = value as number;
-
-			if (field.min !== undefined && number < field.min) {
-				errors.push({
-					message: `"${field.name}" must be at least ${field.min}`,
-					path: fieldPath
-				});
-			} else if (field.max !== undefined && number > field.max) {
-				errors.push({
-					message: `"${field.name}" must be at most ${field.max}`,
-					path: fieldPath
-				});
-			}
-		} else if (field.type === 'object') {
-			validateFields(field.fields, value as JsonObject, fieldPath, template, errors);
-		}
+		validateValue(
+			field,
+			value,
+			`"${field.name}"`,
+			fieldPath,
+			template,
+			errors
+		);
 	}
 
 	const known = new Set(fields.map(field => field.name));

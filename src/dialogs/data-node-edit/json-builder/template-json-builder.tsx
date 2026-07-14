@@ -1,10 +1,11 @@
-import {IconX} from '@tabler/icons';
+import {IconPlus, IconX} from '@tabler/icons';
 import classNames from 'classnames';
 import * as React from 'react';
 import {useTranslation} from 'react-i18next';
 import {IconButton} from '../../../components/control/icon-button';
 import {
 	DataNodeTemplate,
+	DataTemplateArrayItem,
 	DataTemplateField,
 	templateFieldDefault,
 	validateTemplateValue
@@ -41,7 +42,7 @@ function pathKey(path: JsonPath) {
  * A human-readable rendering of a number field's bounds, e.g. `≥ 1` or
  * `1–6`. Returns undefined for unbounded fields.
  */
-function numberBounds(field: DataTemplateField) {
+function numberBounds(field: DataTemplateField | DataTemplateArrayItem) {
 	if (field.type !== 'number') {
 		return undefined;
 	}
@@ -62,6 +63,135 @@ function numberBounds(field: DataTemplateField) {
 }
 
 const noop = () => {};
+
+interface TemplateValueProps {
+	errorsByPath: Map<string, string>;
+	/**
+	 * Template the value must follow: a field, or an array's item template.
+	 */
+	field: DataTemplateField | DataTemplateArrayItem;
+	onRemoveValue: (path: JsonPath) => void;
+	onSetValue: (path: JsonPath, value: JsonValue) => void;
+	/**
+	 * Path of the value itself.
+	 */
+	path: JsonPath;
+	value: JsonValue;
+}
+
+/**
+ * The editor for a single templated value: fixed rows for objects, an
+ * add/remove item list for arrays, a dropdown for enum strings, and an inline
+ * input for everything else. Shared between template field rows and array
+ * items.
+ */
+const TemplateValue: React.FC<TemplateValueProps> = props => {
+	const {errorsByPath, field, onRemoveValue, onSetValue, path, value} = props;
+	const {t} = useTranslation();
+
+	if (field.type === 'object' && isJsonObject(value)) {
+		return (
+			<div className="json-builder-container template-builder-container">
+				{field.fields.map(subfield => (
+					<TemplateFieldRow
+						container={value}
+						errorsByPath={errorsByPath}
+						field={subfield}
+						key={subfield.name}
+						onRemoveValue={onRemoveValue}
+						onSetValue={onSetValue}
+						path={path}
+					/>
+				))}
+			</div>
+		);
+	}
+
+	if (field.type === 'array' && Array.isArray(value)) {
+		const itemBounds = numberBounds(field.item);
+
+		return (
+			<div className="json-builder-container template-builder-container">
+				{value.map((item, index) => {
+					const itemPath = [...path, index];
+					const itemError = errorsByPath.get(pathKey(itemPath));
+
+					return (
+						<div
+							className="json-builder-row template-builder-item"
+							key={index}
+						>
+							<span className="json-builder-index">{index + 1}</span>
+							<TemplateValue
+								errorsByPath={errorsByPath}
+								field={field.item}
+								onRemoveValue={onRemoveValue}
+								onSetValue={onSetValue}
+								path={itemPath}
+								value={item}
+							/>
+							{itemBounds && (
+								<span className="template-builder-range">{itemBounds}</span>
+							)}
+							{itemError && (
+								<span className="template-builder-error">{itemError}</span>
+							)}
+							<IconButton
+								icon={<IconX />}
+								iconOnly
+								label={t('common.remove')}
+								onClick={() => onRemoveValue(itemPath)}
+							/>
+						</div>
+					);
+				})}
+				<div className="template-builder-add-item">
+					<IconButton
+						icon={<IconPlus />}
+						label={t('dialogs.dataNodeEdit.builder.addItem')}
+						onClick={() =>
+							onSetValue([...path, value.length], templateFieldDefault(field.item))
+						}
+					/>
+				</div>
+			</div>
+		);
+	}
+
+	if (field.type === 'string' && field.enum && typeof value === 'string') {
+		return (
+			<select
+				aria-label={t('dialogs.dataNodeEdit.builder.stringLabel')}
+				className="json-builder-enum"
+				onChange={event => onSetValue(path, event.target.value)}
+				value={value}
+			>
+				{/*
+				A value outside the allowed set (e.g. typed in the text view)
+				still has to render as the select's current value. Validation
+				flags it alongside.
+				*/}
+				{!field.enum.includes(value) && <option value={value}>{value}</option>}
+				{field.enum.map(option => (
+					<option key={option} value={option}>
+						{option}
+					</option>
+				))}
+			</select>
+		);
+	}
+
+	return (
+		<JsonBuilderNode
+			onAppend={noop}
+			onRemove={noop}
+			onRenameKey={noop}
+			onSetValue={onSetValue}
+			path={path}
+			value={value}
+		/>
+	);
+};
 
 interface TemplateFieldRowProps {
 	container: JsonObject;
@@ -119,51 +249,14 @@ const TemplateFieldRow: React.FC<TemplateFieldRowProps> = props => {
 			/>
 			<span className="template-builder-key">{field.name}</span>
 			{present ? (
-				field.type === 'object' && isJsonObject(value) ? (
-					<div className="json-builder-container template-builder-container">
-						{field.fields.map(subfield => (
-							<TemplateFieldRow
-								container={value}
-								errorsByPath={errorsByPath}
-								field={subfield}
-								key={subfield.name}
-								onRemoveValue={onRemoveValue}
-								onSetValue={onSetValue}
-								path={fieldPath}
-							/>
-						))}
-					</div>
-				) : field.type === 'string' && field.enum && typeof value === 'string' ? (
-					<select
-						aria-label={t('dialogs.dataNodeEdit.builder.stringLabel')}
-						className="json-builder-enum"
-						onChange={event => onSetValue(fieldPath, event.target.value)}
-						value={value}
-					>
-						{/*
-						A value outside the allowed set (e.g. typed in the text view)
-						still has to render as the select's current value. Validation
-						flags it alongside.
-						*/}
-						{!field.enum.includes(value) && (
-							<option value={value}>{value}</option>
-						)}
-						{field.enum.map(option => (
-							<option key={option} value={option}>
-								{option}
-							</option>
-						))}
-					</select>
-				) : (
-					<JsonBuilderNode
-						onAppend={noop}
-						onRemove={noop}
-						onRenameKey={noop}
-						onSetValue={onSetValue}
-						path={fieldPath}
-						value={value}
-					/>
-				)
+				<TemplateValue
+					errorsByPath={errorsByPath}
+					field={field}
+					onRemoveValue={onRemoveValue}
+					onSetValue={onSetValue}
+					path={fieldPath}
+					value={value}
+				/>
 			) : (
 				<span className="template-builder-hint">
 					{!requirementMet && field.requires

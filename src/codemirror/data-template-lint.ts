@@ -13,24 +13,31 @@ import {JsonValue} from '../util/json';
 import {JsonLintAnnotation, positionFromOffset} from './json-lint';
 
 /**
- * Finds the character offset of the key an error's path points at, by
- * searching for each path step's quoted key in order. This is a heuristic--it
- * can be fooled by string values that look like keys--but template documents
- * are small and regular enough that it lands correctly in practice. Returns
- * undefined if a step can't be found.
+ * Finds the character offset and length of the key an error's path points at,
+ * by searching for each path step's quoted key in order. This is a
+ * heuristic--it can be fooled by string values that look like keys--but
+ * template documents are small and regular enough that it lands correctly in
+ * practice. Array indexes can't be located this way, so they're skipped and
+ * the error anchors at the nearest named key. Returns undefined if a step
+ * can't be found.
  */
 function offsetOfPath(text: string, error: DataTemplateError) {
 	let offset = 0;
-	let found: number | undefined = undefined;
+	let found: {index: number; length: number} | undefined = undefined;
 
 	for (const step of error.path) {
-		const index = text.indexOf(JSON.stringify(step), offset);
+		if (typeof step === 'number') {
+			continue;
+		}
+
+		const key = JSON.stringify(step);
+		const index = text.indexOf(key, offset);
 
 		if (index === -1) {
 			return undefined;
 		}
 
-		found = index;
+		found = {index, length: key.length};
 		offset = index + 1;
 	}
 
@@ -55,15 +62,12 @@ export function templateAnnotations(
 	}
 
 	return validateTemplateValue(template, root).map(error => {
-		const offset = offsetOfPath(text, error);
+		const anchor = offsetOfPath(text, error);
 		const from =
-			offset !== undefined
-				? positionFromOffset(text, offset)
+			anchor !== undefined
+				? positionFromOffset(text, anchor.index)
 				: {line: 0, ch: 0};
-		const length =
-			offset !== undefined && error.path.length > 0
-				? JSON.stringify(error.path[error.path.length - 1]).length
-				: 1;
+		const length = anchor !== undefined ? anchor.length : 1;
 
 		return {
 			from,

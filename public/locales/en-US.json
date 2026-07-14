@@ -170,6 +170,7 @@
 		},
 		"dataNodeEdit": {
 			"builder": {
+				"addItem": "Add Item",
 				"booleanLabel": "Boolean Value",
 				"dropHint": "Drag a type here from the palette above, or use the add button.",
 				"includeField": "Include \"{{name}}\"",
