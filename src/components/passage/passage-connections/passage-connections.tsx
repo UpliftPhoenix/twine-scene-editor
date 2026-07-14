@@ -1,9 +1,14 @@
 import * as React from 'react';
-import {Passage, passageConnections} from '../../../store/stories';
+import {
+	Passage,
+	passageConnections,
+	tagLinkConnections
+} from '../../../store/stories';
 import {Point} from '../../../util/geometry';
 import {PassageConnectionGroup} from './passage-connection-group';
 import {LinkMarkers} from './link-markers';
 import {StartConnection} from './start-connection';
+import {TagLinkDragPreview} from './tag-link-drag-preview';
 import {useFormatReferenceParser} from '../../../store/use-format-reference-parser';
 
 export interface PassageConnectionsProps {
@@ -12,18 +17,34 @@ export interface PassageConnectionsProps {
 	offset: Point;
 	passages: Passage[];
 	startPassageId: string;
+	/**
+	 * If set, a data node's link handle is being dragged and a preview line is
+	 * drawn from the node to this point (in logical map coordinates).
+	 */
+	tagLinkDrag?: {node: Passage; point: Point};
 }
 
 const emptySet = new Set<Passage>();
 const noOffset: Point = {left: 0, top: 0};
 
 export const PassageConnections: React.FC<PassageConnectionsProps> = props => {
-	const {formatName, formatVersion, offset, passages, startPassageId} = props;
+	const {
+		formatName,
+		formatVersion,
+		offset,
+		passages,
+		startPassageId,
+		tagLinkDrag
+	} = props;
 	const referenceParser = useFormatReferenceParser(formatName, formatVersion);
 	const {draggable: draggableLinks, fixed: fixedLinks} = React.useMemo(
 		() => passageConnections(passages),
 		[passages]
 	);
+	const {
+		draggable: draggableTagLinks,
+		fixed: fixedTagLinks
+	} = React.useMemo(() => tagLinkConnections(passages), [passages]);
 	const {
 		draggable: draggableReferences,
 		fixed: fixedReferences
@@ -61,6 +82,23 @@ export const PassageConnections: React.FC<PassageConnectionsProps> = props => {
 				self={emptySet}
 				variant="reference"
 			/>
+			<PassageConnectionGroup
+				broken={emptySet}
+				connections={draggableTagLinks}
+				offset={offset}
+				self={emptySet}
+				variant="tag"
+			/>
+			<PassageConnectionGroup
+				broken={emptySet}
+				connections={fixedTagLinks}
+				offset={noOffset}
+				self={emptySet}
+				variant="tag"
+			/>
+			{tagLinkDrag && (
+				<TagLinkDragPreview node={tagLinkDrag.node} point={tagLinkDrag.point} />
+			)}
 		</svg>
 	);
 };

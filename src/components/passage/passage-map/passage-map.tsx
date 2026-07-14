@@ -1,7 +1,8 @@
 import * as React from 'react';
 import {DraggableData} from 'react-draggable';
-import {Passage, Story} from '../../../store/stories';
-import {boundingRect, Point} from '../../../util/geometry';
+import {isDataNode, Passage, Story} from '../../../store/stories';
+import {boundingRect, Point, pointInRect} from '../../../util/geometry';
+import {tagLinkHandleOrigin} from '../../../util/tag-link';
 import {PassageConnections} from '../passage-connections';
 import {PassageCardGroup} from '../passage-card-group';
 import './passage-map.css';
@@ -10,6 +11,10 @@ import classnames from 'classnames';
 export interface PassageMapProps {
 	formatName: string;
 	formatVersion: string;
+	/**
+	 * Called when the user drops a data node's link handle onto a passage.
+	 */
+	onConnectTagLink?: (node: Passage, target: Passage) => void;
 	onDeselect: (passage: Passage) => void;
 	onDrag: (change: Point) => void;
 	onEdit: (passage: Passage) => void;
@@ -20,6 +25,11 @@ export interface PassageMapProps {
 	tagDisplay: 'color' | 'name';
 	visibleZoom: number;
 	zoom: number;
+}
+
+interface TagLinkDragState {
+	node: Passage;
+	point: Point;
 }
 
 interface DragState {
@@ -74,6 +84,7 @@ export const PassageMap: React.FC<PassageMapProps> = props => {
 	const {
 		formatName,
 		formatVersion,
+		onConnectTagLink,
 		onDeselect,
 		onDrag,
 		onEdit,
@@ -196,6 +207,80 @@ export const PassageMap: React.FC<PassageMapProps> = props => {
 		[onSelect]
 	);
 
+	// Dragging a data node's link handle. The current drag position lives in a
+	// ref so the callbacks below keep stable identities during a drag (state
+	// updates on every mouse move would otherwise re-render every card through
+	// changed callback props); the state mirror only drives the preview line in
+	// the connection layer.
+
+	const tagLinkDragRef = React.useRef<TagLinkDragState | null>(null);
+	const [tagLinkDrag, setTagLinkDrag] = React.useState<TagLinkDragState>();
+	const [tagLinkDropTargetId, setTagLinkDropTargetId] =
+		React.useState<string>();
+
+	const findTagLinkDropTarget = React.useCallback(
+		(point: Point) =>
+			passages.find(
+				passage => !isDataNode(passage) && pointInRect(point, passage)
+			),
+		[passages]
+	);
+	const handleTagLinkDragStart = React.useCallback((node: Passage) => {
+		tagLinkDragRef.current = {node, point: tagLinkHandleOrigin(node)};
+		setTagLinkDrag(tagLinkDragRef.current);
+	}, []);
+	const handleTagLinkDrag = React.useCallback(
+		(node: Passage, delta: Point) => {
+			const previous = tagLinkDragRef.current;
+
+			if (!previous) {
+				return;
+			}
+
+			// The delta is in screen pixels; convert to logical coordinates.
+
+			const point = {
+				left: previous.point.left + delta.left / visibleZoom,
+				top: previous.point.top + delta.top / visibleZoom
+			};
+
+			tagLinkDragRef.current = {node, point};
+			setTagLinkDrag(tagLinkDragRef.current);
+			setTagLinkDropTargetId(findTagLinkDropTarget(point)?.id);
+		},
+		[findTagLinkDropTarget, visibleZoom]
+	);
+	const handleTagLinkDragStop = React.useCallback(() => {
+		const drag = tagLinkDragRef.current;
+
+		tagLinkDragRef.current = null;
+		setTagLinkDrag(undefined);
+		setTagLinkDropTargetId(undefined);
+
+		if (drag && onConnectTagLink) {
+			const target = findTagLinkDropTarget(drag.point);
+
+			if (target) {
+				onConnectTagLink(drag.node, target);
+			}
+		}
+	}, [findTagLinkDropTarget, onConnectTagLink]);
+
+	// Highlight the passage the link handle is hovering over. This only changes
+	// identity when the hovered passage changes, not on every mouse move.
+
+	const displayedPassages = React.useMemo(() => {
+		if (!tagLinkDropTargetId) {
+			return passages;
+		}
+
+		return passages.map(passage =>
+			passage.id === tagLinkDropTargetId && !passage.highlighted
+				? {...passage, highlighted: true}
+				: passage
+		);
+	}, [passages, tagLinkDropTargetId]);
+
 	return (
 		<div
 			className={classnames('passage-map', {
@@ -213,6 +298,7 @@ export const PassageMap: React.FC<PassageMapProps> = props => {
 				}}
 				passages={passages}
 				startPassageId={startPassageId}
+				tagLinkDrag={tagLinkDrag}
 			/>
 			<PassageCardGroup
 				onDeselect={onDeselect}
@@ -221,7 +307,10 @@ export const PassageMap: React.FC<PassageMapProps> = props => {
 				onDragStop={handleDragStop}
 				onEdit={onEdit}
 				onSelect={handleSelect}
-				passages={passages}
+				onTagLinkDrag={handleTagLinkDrag}
+				onTagLinkDragStart={handleTagLinkDragStart}
+				onTagLinkDragStop={handleTagLinkDragStop}
+				passages={displayedPassages}
 				tagColors={tagColors}
 				tagDisplay={tagDisplay}
 			/>

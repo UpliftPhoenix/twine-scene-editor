@@ -59,6 +59,18 @@ export function rectFromPoints(p1: Point, p2: Point): Rect {
 }
 
 /**
+ * Returns whether a point lies within a rectangle, inclusive of its edges.
+ */
+export function pointInRect(point: Point, rect: Rect) {
+	return (
+		point.left >= rect.left &&
+		point.left <= rect.left + rect.width &&
+		point.top >= rect.top &&
+		point.top <= rect.top + rect.height
+	);
+}
+
+/**
  * Returns whether two rectangles intersect.
  * @see http://stackoverflow.com/questions/2752349/fast-rectangle-to-rectangle-intersection
  */

@@ -1,5 +1,6 @@
 import escapeRegExp from 'lodash/escapeRegExp';
 import {Thunk} from 'react-hook-thunk-reducer';
+import {tagLinkName} from '../../../util/tag-link';
 import {storyWithId} from '../getters';
 import {Passage, StoriesAction, StoriesState, Story} from '../stories.types';
 import {createNewlyLinkedPassages} from './create-newly-linked-passages';
@@ -57,6 +58,56 @@ export function updatePassage(
 			dispatch(
 				createNewlyLinkedPassages(updatedStory, passage, props.text, oldText)
 			);
+		}
+
+		// If this passage is a tag-linked data node and its tag link changed
+		// (because it was renamed or its template changed), move the tag on every
+		// linked passage so the links follow the node--or remove it, if the node
+		// no longer has a tag link at all. This runs regardless of
+		// dontUpdateOthers--that option only concerns story link side effects.
+
+		const oldTagLink = tagLinkName(passage);
+		const newTagLink = tagLinkName({...passage, ...props});
+
+		if (oldTagLink && oldTagLink !== newTagLink) {
+			story.passages.forEach(linkedPassage => {
+				if (
+					linkedPassage.id !== passage.id &&
+					linkedPassage.tags.includes(oldTagLink)
+				) {
+					dispatch({
+						type: 'updatePassage',
+						passageId: linkedPassage.id,
+						storyId: story.id,
+						props: {
+							tags: newTagLink
+								? linkedPassage.tags.map(tag =>
+										tag === oldTagLink ? newTagLink : tag
+								  )
+								: linkedPassage.tags.filter(tag => tag !== oldTagLink)
+						}
+					});
+				}
+			});
+
+			// Carry the tag's color over to its new name.
+
+			if (
+				newTagLink &&
+				story.tagColors[oldTagLink] &&
+				!story.tagColors[newTagLink]
+			) {
+				dispatch({
+					type: 'updateStory',
+					storyId: story.id,
+					props: {
+						tagColors: {
+							...story.tagColors,
+							[newTagLink]: story.tagColors[oldTagLink]
+						}
+					}
+				});
+			}
 		}
 
 		if (props.name) {

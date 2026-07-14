@@ -1,7 +1,7 @@
 import * as React from 'react';
 import {Passage} from '../../../store/stories';
 import {BrokenConnection} from './broken-connection';
-import {PassageConnection} from './passage-connection';
+import {ConnectionVariant, PassageConnection} from './passage-connection';
 import {SelfConnection} from './self-connection';
 import {Point} from '../../../util/geometry';
 
@@ -10,7 +10,7 @@ export interface PassageConnectionGroupProps {
 	connections: Map<Passage, Set<Passage>>;
 	offset: Point;
 	self: Set<Passage>;
-	variant?: 'link' | 'reference';
+	variant?: ConnectionVariant;
 }
 
 export const PassageConnectionGroup: React.FC<PassageConnectionGroupProps> = React.memo(

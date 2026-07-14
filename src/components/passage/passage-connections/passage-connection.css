@@ -10,3 +10,12 @@ path.passage-connection {
 path.passage-connection.variant-reference {
 	stroke-dasharray: 4px;
 }
+
+path.passage-connection.variant-tag {
+	stroke: var(--blue);
+	stroke-dasharray: 6px 3px;
+}
+
+path.passage-connection.tag-link-drag-preview {
+	stroke-dasharray: none;
+}

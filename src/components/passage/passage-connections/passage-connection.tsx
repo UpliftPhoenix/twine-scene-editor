@@ -10,11 +10,13 @@ import {
 import {Passage} from '../../../store/stories';
 import './passage-connection.css';
 
+export type ConnectionVariant = 'link' | 'reference' | 'tag';
+
 export interface PassageConnectionProps {
 	end: Passage;
 	offset: Point;
 	start: Passage;
-	variant: 'link' | 'reference';
+	variant: ConnectionVariant;
 }
 
 export const PassageConnection: React.FC<PassageConnectionProps> = props => {
@@ -98,7 +100,11 @@ export const PassageConnection: React.FC<PassageConnectionProps> = props => {
 		<path
 			d={path}
 			className={`passage-connection variant-${variant}`}
-			style={{markerEnd: 'url(#link-arrowhead)'}}
+			style={{
+				markerEnd: `url(#${
+					variant === 'tag' ? 'tag-arrowhead' : 'link-arrowhead'
+				})`
+			}}
 		/>
 	);
 };

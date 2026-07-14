@@ -1,0 +1,31 @@
+@import '../../styles/colors.css';
+
+.tag-link-handle {
+	background: var(--blue);
+	border: 2px solid var(--white);
+	border-radius: 50%;
+	box-sizing: content-box;
+	cursor: crosshair;
+	height: 12px;
+	position: absolute;
+	right: -24px;
+	top: calc(50% - 8px);
+	width: 12px;
+	z-index: 1;
+}
+
+/* Stub joining the handle to the card's edge. */
+
+.tag-link-handle::before {
+	background: var(--blue);
+	content: '';
+	height: 2px;
+	left: -10px;
+	position: absolute;
+	top: calc(50% - 1px);
+	width: 10px;
+}
+
+.tag-link-handle:hover {
+	transform: scale(1.25);
+}

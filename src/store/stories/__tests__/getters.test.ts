@@ -10,7 +10,7 @@ import {
 } from '../getters';
 import {Passage, Story} from '../stories.types';
 import {fakePassage, fakeStory} from '../../../test-util';
-import {passageConnections} from '..';
+import {passageConnections, tagLinkConnections} from '..';
 
 describe('passageConnections()', () => {
 	it('places links between two unselected passages in the fixed property', () => {
@@ -138,6 +138,74 @@ describe('passageConnections()', () => {
 				connections: new Map(),
 				self: new Set()
 			}
+		});
+	});
+});
+
+describe('tagLinkConnections()', () => {
+	const node = () =>
+		fakePassage({
+			dataTemplate: 'trigger',
+			name: 'My Trigger',
+			selected: false,
+			type: 'data'
+		});
+
+	it('connects a data node to passages carrying its tag link', () => {
+		const passages = [
+			node(),
+			fakePassage({selected: false, tags: ['trigger:My-Trigger']}),
+			fakePassage({selected: false, tags: []})
+		];
+
+		expect(tagLinkConnections(passages)).toEqual({
+			draggable: new Map(),
+			fixed: new Map([[passages[0], new Set([passages[1]])]])
+		});
+	});
+
+	it('places connections with either endpoint selected in the draggable property', () => {
+		const passages = [
+			{...node(), selected: true},
+			fakePassage({selected: false, tags: ['trigger:My-Trigger']})
+		];
+
+		expect(tagLinkConnections(passages)).toEqual({
+			draggable: new Map([[passages[0], new Set([passages[1]])]]),
+			fixed: new Map()
+		});
+	});
+
+	it("ignores tags on other data nodes--they can't be link targets", () => {
+		const passages = [
+			node(),
+			fakePassage({
+				selected: false,
+				tags: ['trigger:My-Trigger'],
+				type: 'data'
+			})
+		];
+
+		expect(tagLinkConnections(passages)).toEqual({
+			draggable: new Map(),
+			fixed: new Map()
+		});
+	});
+
+	it('ignores data nodes without a tag-linkable template', () => {
+		const passages = [
+			fakePassage({
+				dataTemplate: 'item-reward',
+				name: 'My Trigger',
+				selected: false,
+				type: 'data'
+			}),
+			fakePassage({selected: false, tags: ['item-reward:My-Trigger']})
+		];
+
+		expect(tagLinkConnections(passages)).toEqual({
+			draggable: new Map(),
+			fixed: new Map()
 		});
 	});
 });

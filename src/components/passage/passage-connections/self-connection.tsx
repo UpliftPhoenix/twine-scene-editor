@@ -2,12 +2,13 @@ import * as React from 'react';
 import {Passage} from '../../../store/stories';
 import {Point} from '../../../util/geometry';
 import {arc} from '../../../util/svg';
+import {ConnectionVariant} from './passage-connection';
 import './self-connection.css';
 
 export interface SelfConnectionProps {
 	offset: Point;
 	passage: Passage;
-	variant: 'link' | 'reference';
+	variant: ConnectionVariant;
 }
 
 export const SelfConnection: React.FC<SelfConnectionProps> = props => {

@@ -3,6 +3,7 @@ import uniq from 'lodash/uniq';
 import {Passage, StorySearchFlags, Story} from './stories.types';
 import {createRegExp} from '../../util/regexp';
 import {parseLinks} from '../../util/parse-links';
+import {tagLinkName} from '../../util/tag-link';
 
 /**
  * Returns whether a passage is a data node, i.e. holds JSON data instead of
@@ -102,6 +103,45 @@ export function passageConnections(
 			}
 		})
 	);
+
+	return result;
+}
+
+/**
+ * Returns connections between tag-linkable data nodes and the passages tagged
+ * with their tag link (see util/tag-link.ts). Like `passageConnections()`,
+ * connections are divided between draggable and fixed depending on whether
+ * either endpoint is selected. Map keys are data nodes; values are the
+ * passages they're linked to.
+ */
+export function tagLinkConnections(passages: Passage[]) {
+	const result = {
+		draggable: new Map<Passage, Set<Passage>>(),
+		fixed: new Map<Passage, Set<Passage>>()
+	};
+
+	for (const node of passages) {
+		const tag = tagLinkName(node);
+
+		if (!tag) {
+			continue;
+		}
+
+		for (const passage of passages) {
+			if (isDataNode(passage) || !passage.tags.includes(tag)) {
+				continue;
+			}
+
+			const target =
+				node.selected || passage.selected ? result.draggable : result.fixed;
+
+			if (target.has(node)) {
+				target.get(node)!.add(passage);
+			} else {
+				target.set(node, new Set([passage]));
+			}
+		}
+	}
 
 	return result;
 }

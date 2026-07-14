@@ -162,6 +162,169 @@ describe('updatePassage action creator', () => {
 			]);
 		});
 
+		describe('when a tag-linked data node changes', () => {
+			beforeEach(() => {
+				story = fakeStory(3);
+				story.passages[0].name = 'Old Name';
+				story.passages[0].type = 'data';
+				story.passages[0].dataTemplate = 'trigger';
+				story.passages[0].text = '{}';
+				story.passages[1].tags = ['trigger:Old-Name', 'unrelated'];
+				story.passages[1].text = 'no links here';
+				story.passages[2].tags = [];
+				story.passages[2].text = 'no links here';
+			});
+
+			it('moves tag links on other passages when the node is renamed', () => {
+				updatePassage(
+					story,
+					story.passages[0],
+					{name: 'New Name'},
+					{dontUpdateOthers: true}
+				)(dispatch, getState);
+				expect(dispatchMock.mock.calls).toEqual([
+					[
+						{
+							passageId: story.passages[0].id,
+							props: {name: 'New Name'},
+							storyId: story.id,
+							type: 'updatePassage'
+						}
+					],
+					[
+						{
+							passageId: story.passages[1].id,
+							props: {tags: ['trigger:New-Name', 'unrelated']},
+							storyId: story.id,
+							type: 'updatePassage'
+						}
+					]
+				]);
+			});
+
+			it('moves tag links on other passages when the node changes to another tag-linkable template', () => {
+				updatePassage(
+					story,
+					story.passages[0],
+					{dataTemplate: 'requirement'},
+					{dontUpdateOthers: true}
+				)(dispatch, getState);
+				expect(dispatchMock.mock.calls).toEqual([
+					[
+						{
+							passageId: story.passages[0].id,
+							props: {dataTemplate: 'requirement'},
+							storyId: story.id,
+							type: 'updatePassage'
+						}
+					],
+					[
+						{
+							passageId: story.passages[1].id,
+							props: {tags: ['requirement:Old-Name', 'unrelated']},
+							storyId: story.id,
+							type: 'updatePassage'
+						}
+					]
+				]);
+			});
+
+			it("carries the old tag's color over to the new tag", () => {
+				story.tagColors = {'trigger:Old-Name': 'red'};
+				updatePassage(
+					story,
+					story.passages[0],
+					{name: 'New Name'},
+					{dontUpdateOthers: true}
+				)(dispatch, getState);
+				expect(dispatchMock.mock.calls).toContainEqual([
+					{
+						props: {
+							tagColors: {
+								'trigger:Old-Name': 'red',
+								'trigger:New-Name': 'red'
+							}
+						},
+						storyId: story.id,
+						type: 'updateStory'
+					}
+				]);
+			});
+
+			it("doesn't touch other passages' tags when the tag link is unchanged", () => {
+				updatePassage(
+					story,
+					story.passages[0],
+					{text: '{"changed": true}'},
+					{dontUpdateOthers: true}
+				)(dispatch, getState);
+				expect(dispatchMock.mock.calls).toEqual([
+					[
+						{
+							passageId: story.passages[0].id,
+							props: {text: '{"changed": true}'},
+							storyId: story.id,
+							type: 'updatePassage'
+						}
+					]
+				]);
+			});
+
+			it("removes the tag from other passages when the template changes to one that isn't tag-linkable", () => {
+				updatePassage(
+					story,
+					story.passages[0],
+					{dataTemplate: 'item-reward'},
+					{dontUpdateOthers: true}
+				)(dispatch, getState);
+				expect(dispatchMock.mock.calls).toEqual([
+					[
+						{
+							passageId: story.passages[0].id,
+							props: {dataTemplate: 'item-reward'},
+							storyId: story.id,
+							type: 'updatePassage'
+						}
+					],
+					[
+						{
+							passageId: story.passages[1].id,
+							props: {tags: ['unrelated']},
+							storyId: story.id,
+							type: 'updatePassage'
+						}
+					]
+				]);
+			});
+
+			it('removes the tag from other passages when the template is cleared', () => {
+				updatePassage(
+					story,
+					story.passages[0],
+					{dataTemplate: undefined},
+					{dontUpdateOthers: true}
+				)(dispatch, getState);
+				expect(dispatchMock.mock.calls).toEqual([
+					[
+						{
+							passageId: story.passages[0].id,
+							props: {dataTemplate: undefined},
+							storyId: story.id,
+							type: 'updatePassage'
+						}
+					],
+					[
+						{
+							passageId: story.passages[1].id,
+							props: {tags: ['unrelated']},
+							storyId: story.id,
+							type: 'updatePassage'
+						}
+					]
+				]);
+			});
+		});
+
 		it("throws an error if the passage doesn't belong to the story", () =>
 			expect(() =>
 				updatePassage(

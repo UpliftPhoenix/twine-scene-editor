@@ -104,6 +104,13 @@ export interface DataNodeTemplate {
 	 * same keys.
 	 */
 	silentValues: JsonObject;
+	/**
+	 * If true, nodes using this template can be visually linked to passages.
+	 * A link is stored as a `templateId:nodeName` tag on the passage, so links
+	 * can equally be made or broken by editing tags directly. See
+	 * util/tag-link.ts.
+	 */
+	tagLink?: boolean;
 }
 
 export const dataNodeTemplates: DataNodeTemplate[] = [
@@ -149,6 +156,7 @@ export const dataNodeTemplates: DataNodeTemplate[] = [
 		id: 'trigger',
 		name: 'Trigger',
 		silentValues: {},
+		tagLink: true,
 		fields: [
 			{
 				name: 'toast',
@@ -170,6 +178,7 @@ export const dataNodeTemplates: DataNodeTemplate[] = [
 		id: 'requirement',
 		name: 'Requirement',
 		silentValues: {},
+		tagLink: true,
 		fields: [
 			{
 				name: 'type',

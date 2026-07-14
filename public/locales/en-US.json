@@ -149,6 +149,9 @@
 		},
 		"tagEditor": {
 			"alreadyExists": "A tag with this name already exists."
+		},
+		"tagLinkHandle": {
+			"label": "Drag onto a passage to connect this node to it"
 		}
 	},
 	"dialogs": {
@@ -481,6 +484,7 @@
 	"undoChange": {
 		"addTag": "Add Tag",
 		"changeDataNodeTemplate": "Change Data Node Template",
+		"connectTagLink": "Connect Data Node",
 		"changeTagColor": "Change Tag Color",
 		"editDataNode": "Edit Data Node",
 		"newDataNode": "New Data Node",

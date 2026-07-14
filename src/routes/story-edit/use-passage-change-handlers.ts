@@ -5,6 +5,7 @@ import {
 	useDialogsContext
 } from '../../dialogs';
 import {
+	addPassageTag,
 	deselectPassage,
 	movePassages,
 	Passage,
@@ -14,6 +15,7 @@ import {
 } from '../../store/stories';
 import {useUndoableStoriesContext} from '../../store/undoable-stories';
 import {Point, Rect} from '../../util/geometry';
+import {tagLinkName} from '../../util/tag-link';
 
 export function usePassageChangeHandlers(story: Story) {
 	const selectedPassages = React.useMemo(
@@ -22,6 +24,25 @@ export function usePassageChangeHandlers(story: Story) {
 	);
 	const {dispatch: undoableStoriesDispatch} = useUndoableStoriesContext();
 	const {dispatch: dialogsDispatch} = useDialogsContext();
+
+	const handleConnectTagLink = React.useCallback(
+		(node: Passage, target: Passage) => {
+			const tag = tagLinkName(node);
+
+			// Nothing to do if the node isn't tag-linkable or the passage is
+			// already linked.
+
+			if (!tag || target.tags.includes(tag)) {
+				return;
+			}
+
+			undoableStoriesDispatch(
+				addPassageTag(story, target, tag),
+				'undoChange.connectTagLink'
+			);
+		},
+		[story, undoableStoriesDispatch]
+	);
 
 	const handleDeselectPassage = React.useCallback(
 		(passage: Passage) =>
@@ -105,6 +126,7 @@ export function usePassageChangeHandlers(story: Story) {
 	);
 
 	return {
+		handleConnectTagLink,
 		handleDeselectPassage,
 		handleDragPassages,
 		handleEditPassage,

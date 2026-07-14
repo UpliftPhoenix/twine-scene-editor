@@ -59,8 +59,9 @@ export const DataNodeEditContents: React.FC<
 	}
 
 	function handleRename(name: string) {
-		// Data nodes can't be linked to, so there are never links to update in
-		// other passages.
+		// Data nodes can't be linked to by [[links]], so there are never links to
+		// update in other passages. If this node is tag-linked to passages,
+		// updatePassage moves their tags to the new name itself.
 
 		dispatch(
 			updatePassage(story, passage, {name}, {dontUpdateOthers: true}),
