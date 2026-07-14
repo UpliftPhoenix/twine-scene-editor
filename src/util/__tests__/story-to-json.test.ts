@@ -1,12 +1,24 @@
 import {fakePassage, fakeStory} from '../../test-util';
 import {AppInfo} from '../app-info';
+import {dataNodeTemplate} from '../data-node-templates';
 import {storyToJson, storyToJsonData} from '../story-to-json';
+
+// Wrap the template lookup so tests can substitute templates that don't exist
+// in the real registry, e.g. one with silent values.
+
+jest.mock('../data-node-templates', () => ({
+	...jest.requireActual('../data-node-templates'),
+	dataNodeTemplate: jest.fn()
+}));
 
 describe('storyToJsonData()', () => {
 	const appInfo: AppInfo = {name: 'mock-app', version: '1.2.3'};
 
 	beforeEach(() => {
 		jest.spyOn(Date, 'now').mockReturnValue(12345);
+		(dataNodeTemplate as jest.Mock).mockImplementation(
+			jest.requireActual('../data-node-templates').dataNodeTemplate
+		);
 	});
 
 	afterEach(() => jest.restoreAllMocks());
@@ -73,10 +85,17 @@ describe('storyToJsonData()', () => {
 		});
 
 		it("merges a data node's template silent values into its exported data", () => {
+			(dataNodeTemplate as jest.Mock).mockReturnValueOnce({
+				id: 'test-silent',
+				name: 'Test Silent',
+				silentValues: {category: 'currency'},
+				fields: []
+			});
+
 			const story = fakeStory(1);
 
 			story.passages[0].type = 'data';
-			story.passages[0].dataTemplate = 'currency-reward';
+			story.passages[0].dataTemplate = 'test-silent';
 			story.passages[0].text = '{"kind": "gems", "amount": 5}';
 
 			expect(storyToJsonData(story, appInfo).data[0].data).toEqual({
@@ -102,11 +121,11 @@ describe('storyToJsonData()', () => {
 			const story = fakeStory(1);
 
 			story.passages[0].type = 'data';
-			story.passages[0].dataTemplate = 'currency-reward';
-			story.passages[0].text = '{"kind": "gems", "amount": 5}';
+			story.passages[0].dataTemplate = 'trigger';
+			story.passages[0].text = '{}';
 
 			expect(storyToJsonData(story, appInfo).data[0].templateId).toBe(
-				'currency-reward'
+				'trigger'
 			);
 		});
 

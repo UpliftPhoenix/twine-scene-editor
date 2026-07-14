@@ -1,4 +1,5 @@
 import * as React from 'react';
+import {dataNodeTemplates} from '../../../util/data-node-templates';
 import './link-markers.css';
 
 /**
@@ -29,6 +30,25 @@ export const LinkMarkers: React.FC = () => (
 		>
 			<path d="M 1,1 7,4 1,7 Z" />
 		</marker>
+		{/*
+		Markers can't inherit the stroke color of the line using them, so themed
+		templates each get their own arrowhead in their color.
+		*/}
+		{dataNodeTemplates
+			.filter(template => template.color)
+			.map(template => (
+				<marker
+					id={`tag-arrowhead-${template.id}`}
+					key={template.id}
+					refX="6"
+					refY="4"
+					markerWidth="8"
+					markerHeight="8"
+					orient="auto"
+				>
+					<path d="M 1,1 7,4 1,7 Z" style={{fill: template.color}} />
+				</marker>
+			))}
 		<marker
 			id="link-broken"
 			refX="7.5"

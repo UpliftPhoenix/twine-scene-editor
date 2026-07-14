@@ -187,6 +187,7 @@
 				"numberLabel": "Number Value",
 				"paletteHint": "Drag a type onto an object or array below to add a value.",
 				"requiresHint": "Available when {{field}} is {{value}}.",
+				"requiresNotEqualHint": "Available when {{field}} isn't {{value}}.",
 				"stringLabel": "String Value",
 				"templateNotObject": "This data node's template requires its contents to be a JSON object. Fix this in the text view.",
 				"types": {
@@ -375,6 +376,7 @@
 				"goTo": "Go To",
 				"javaScript": "JavaScript",
 				"newDataNode": "New Data",
+				"newNpcNode": "New NPC",
 				"passageTags": "Passage Tags",
 				"snapToGrid": "Snap to Grid",
 				"startStoryHere": "Start Story Here",
@@ -471,6 +473,9 @@
 		"dataNodeDefaults": {
 			"name": "Untitled Data Node"
 		},
+		"npcNodeDefaults": {
+			"name": "Untitled NPC"
+		},
 		"passageDefaults": {
 			"name": "Untitled Passage"
 		},
@@ -488,6 +493,7 @@
 		"changeTagColor": "Change Tag Color",
 		"editDataNode": "Edit Data Node",
 		"newDataNode": "New Data Node",
+		"newNpcNode": "New NPC Node",
 		"newPassage": "New Passage",
 		"renameDataNode": "Rename Data Node",
 		"deletePassage": "Delete Passage",

@@ -24,6 +24,11 @@ describe('tagLinkName', () => {
 				fakePassage({dataTemplate: 'requirement', name: 'Req', type: 'data'})
 			)
 		).toBe('requirement:Req');
+		expect(
+			tagLinkName(
+				fakePassage({dataTemplate: 'npc', name: 'Shop Keeper', type: 'data'})
+			)
+		).toBe('npc:Shop-Keeper');
 	});
 
 	it('returns undefined for regular passages', () => {

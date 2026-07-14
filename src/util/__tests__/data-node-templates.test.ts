@@ -8,8 +8,44 @@ import {
 	validateTemplateValue
 } from '../data-node-templates';
 
-const itemReward = dataNodeTemplate('item-reward')!;
-const currencyReward = dataNodeTemplate('currency-reward')!;
+// Synthetic reward templates exercising enums, bounded numbers, silent
+// values, and a nested optional object gated by `requires`.
+
+const itemReward: DataNodeTemplate = {
+	id: 'test-item-reward',
+	name: 'Item Reward',
+	silentValues: {},
+	fields: [
+		{
+			name: 'category',
+			type: 'string',
+			enum: ['pets', 'gifts', 'toys', 'transport', 'food', 'stickers']
+		},
+		{name: 'kind', type: 'string', default: ''},
+		{name: 'amount', type: 'number', optional: true, default: 1, min: 1},
+		{
+			name: 'properties',
+			type: 'object',
+			optional: true,
+			requires: {field: 'category', equals: 'pets'},
+			fields: [
+				{name: 'age', type: 'number', optional: true, default: 1, min: 1, max: 6},
+				{name: 'neon', type: 'boolean', optional: true, default: true},
+				{name: 'mega_neon', type: 'boolean', optional: true, default: true}
+			]
+		}
+	]
+};
+
+const currencyReward: DataNodeTemplate = {
+	id: 'test-currency-reward',
+	name: 'Currency Reward',
+	silentValues: {category: 'currency'},
+	fields: [
+		{name: 'kind', type: 'string', enum: ['money', 'alt_currency']},
+		{name: 'amount', type: 'number', default: 1, min: 1}
+	]
+};
 
 // A synthetic template exercising array fields: an array of objects and an
 // optional array of bounded numbers.
@@ -39,10 +75,51 @@ const arrayTemplate: DataNodeTemplate = {
 	]
 };
 
+// A synthetic template exercising a `notEqual` field requirement: `note` is
+// only allowed while `kind` isn't 'money'.
+
+const notEqualTemplate: DataNodeTemplate = {
+	id: 'test-not-equal',
+	name: 'Test Not Equal',
+	silentValues: {},
+	fields: [
+		{name: 'kind', type: 'string', enum: ['money', 'gems']},
+		{
+			name: 'note',
+			type: 'string',
+			optional: true,
+			requires: {field: 'kind', notEqual: 'money'}
+		}
+	]
+};
+
+// A synthetic template exercising a conditional enum: `kind` is constrained
+// to a dropdown only while `category` is 'currency', and is a free string
+// otherwise.
+
+const conditionalEnumTemplate: DataNodeTemplate = {
+	id: 'test-conditional-enum',
+	name: 'Test Conditional Enum',
+	silentValues: {},
+	fields: [
+		{name: 'category', type: 'string', enum: ['pets', 'currency']},
+		{
+			name: 'kind',
+			type: 'string',
+			enum: [
+				{
+					when: {field: 'category', equals: 'currency'},
+					options: ['money', 'gems']
+				}
+			]
+		}
+	]
+};
+
 describe('dataNodeTemplate()', () => {
 	it('finds templates by ID', () => {
-		expect(dataNodeTemplate('item-reward')?.name).toBe('Item Reward');
-		expect(dataNodeTemplate('currency-reward')?.name).toBe('Currency Reward');
+		expect(dataNodeTemplate('trigger')?.name).toBe('Trigger');
+		expect(dataNodeTemplate('requirement')?.name).toBe('Requirement');
 	});
 
 	it('returns undefined for undefined or unknown IDs', () => {
@@ -68,6 +145,16 @@ describe('templateFieldDefault()', () => {
 		const category = itemReward.fields.find(({name}) => name === 'category')!;
 
 		expect(templateFieldDefault(category)).toBe('pets');
+	});
+
+	it('resolves conditional enum defaults against the containing object', () => {
+		const kind = conditionalEnumTemplate.fields.find(
+			({name}) => name === 'kind'
+		)!;
+
+		expect(templateFieldDefault(kind, {category: 'currency'})).toBe('money');
+		expect(templateFieldDefault(kind, {category: 'pets'})).toBe('');
+		expect(templateFieldDefault(kind)).toBe('');
 	});
 
 	it('defaults booleans to their template default', () => {
@@ -154,6 +241,16 @@ describe('applyTemplate()', () => {
 		});
 	});
 
+	it('fills conditional enum defaults based on sibling fields', () => {
+		expect(
+			applyTemplate(conditionalEnumTemplate, {category: 'currency'})
+		).toEqual({category: 'currency', kind: 'money'});
+		expect(applyTemplate(conditionalEnumTemplate, {category: 'pets'})).toEqual({
+			category: 'pets',
+			kind: ''
+		});
+	});
+
 	it('keeps out-of-enum strings so validation can flag them', () => {
 		expect(applyTemplate(itemReward, {category: 'misc', kind: 'x'})).toEqual({
 			category: 'misc',
@@ -208,6 +305,15 @@ describe('applyTemplate()', () => {
 				properties: {age: 2}
 			})
 		).toEqual({category: 'toys', kind: 'ball'});
+	});
+
+	it('drops optional fields whose notEqual requirement is not met', () => {
+		expect(
+			applyTemplate(notEqualTemplate, {kind: 'money', note: 'hi'})
+		).toEqual({kind: 'money'});
+		expect(applyTemplate(notEqualTemplate, {kind: 'gems', note: 'hi'})).toEqual(
+			{kind: 'gems', note: 'hi'}
+		);
 	});
 });
 
@@ -280,6 +386,29 @@ describe('validateTemplateValue()', () => {
 		).toEqual([]);
 	});
 
+	it('enforces conditional enums only while their condition is met', () => {
+		expect(
+			validateTemplateValue(conditionalEnumTemplate, {
+				category: 'currency',
+				kind: 'money'
+			})
+		).toEqual([]);
+		expect(
+			validateTemplateValue(conditionalEnumTemplate, {
+				category: 'currency',
+				kind: 'dog'
+			})
+		).toEqual([
+			{message: '"kind" must be one of "money", "gems"', path: ['kind']}
+		]);
+		expect(
+			validateTemplateValue(conditionalEnumTemplate, {
+				category: 'pets',
+				kind: 'dog'
+			})
+		).toEqual([]);
+	});
+
 	it('enforces field requirements', () => {
 		expect(
 			validateTemplateValue(itemReward, {
@@ -293,6 +422,20 @@ describe('validateTemplateValue()', () => {
 				path: ['properties']
 			}
 		]);
+	});
+
+	it('enforces notEqual field requirements', () => {
+		expect(
+			validateTemplateValue(notEqualTemplate, {kind: 'money', note: 'hi'})
+		).toEqual([
+			{
+				message: `"note" is only allowed when "kind" isn't "money"`,
+				path: ['note']
+			}
+		]);
+		expect(
+			validateTemplateValue(notEqualTemplate, {kind: 'gems', note: 'hi'})
+		).toEqual([]);
 	});
 
 	it('reports fields outside the template, including nested ones', () => {

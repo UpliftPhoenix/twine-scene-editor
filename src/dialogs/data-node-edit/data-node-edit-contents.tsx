@@ -135,22 +135,34 @@ export const DataNodeEditContents: React.FC<
 					]}
 					label={template?.name ?? t('dialogs.dataNodeEdit.template')}
 				/>
-				<IconButton
-					icon={<IconLayoutGrid />}
-					label={t('dialogs.dataNodeEdit.visualView')}
-					onClick={() => setView('visual')}
-					selectable
-					selected={view === 'visual'}
-				/>
-				<IconButton
-					icon={<IconCode />}
-					label={t('dialogs.dataNodeEdit.textView')}
-					onClick={() => setView('text')}
-					selectable
-					selected={view === 'text'}
-				/>
+				{!template?.nameOnly && (
+					<>
+						<IconButton
+							icon={<IconLayoutGrid />}
+							label={t('dialogs.dataNodeEdit.visualView')}
+							onClick={() => setView('visual')}
+							selectable
+							selected={view === 'visual'}
+						/>
+						<IconButton
+							icon={<IconCode />}
+							label={t('dialogs.dataNodeEdit.textView')}
+							onClick={() => setView('text')}
+							selectable
+							selected={view === 'text'}
+						/>
+					</>
+				)}
 			</ButtonBar>
-			{view === 'text' ? (
+			{template?.nameOnly ? (
+				// The node's only data is its name, so there's nothing to edit
+				// beyond the buttons above.
+				<div className="name-only-node">
+					{template.cardImage && (
+						<img alt="" draggable={false} src={template.cardImage} />
+					)}
+				</div>
+			) : view === 'text' ? (
 				<DataNodeJsonEditor
 					onChangeText={onChangeLocalText}
 					passage={passage}

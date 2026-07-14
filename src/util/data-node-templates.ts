@@ -8,6 +8,16 @@
 // matching the JSON lint messages in codemirror/json-lint.ts.
 
 import {JsonObject, JsonPath, JsonValue} from './json';
+import npcPortrait from './npc-portrait.png';
+import requirementIcon from './requirement-icon.png';
+import triggerIcon from './trigger-icon.png';
+
+/**
+ * A condition on a sibling field: it must either equal or not equal a value.
+ */
+export type DataTemplateFieldRequirement =
+	| {equals: JsonValue; field: string}
+	| {field: string; notEqual: JsonValue};
 
 interface DataTemplateFieldBase {
 	/**
@@ -19,10 +29,19 @@ interface DataTemplateFieldBase {
 	 */
 	optional?: boolean;
 	/**
-	 * If set, this field may only be present while a sibling field equals a
-	 * value.
+	 * If set, this field may only be present while a sibling field satisfies a
+	 * condition.
 	 */
-	requires?: {equals: JsonValue; field: string};
+	requires?: DataTemplateFieldRequirement;
+}
+
+/**
+ * One branch of a conditional enum: the options in effect while a sibling
+ * field satisfies a condition.
+ */
+export interface DataTemplateEnumVariant {
+	options: string[];
+	when: DataTemplateFieldRequirement;
 }
 
 export interface DataTemplateStringField extends DataTemplateFieldBase {
@@ -31,8 +50,12 @@ export interface DataTemplateStringField extends DataTemplateFieldBase {
 	 * If set, the value must be one of these strings. The visual builder shows
 	 * a dropdown instead of a free text input, and the field defaults to the
 	 * first option unless `default` says otherwise.
+	 *
+	 * A list of variants makes the options conditional on sibling fields: the
+	 * first variant whose `when` is satisfied applies, and if none is, the
+	 * field is a free string. See templateFieldEnum().
 	 */
-	enum?: string[];
+	enum?: string[] | DataTemplateEnumVariant[];
 	type: 'string';
 }
 
@@ -86,6 +109,17 @@ export type DataTemplateArrayItem =
 
 export interface DataNodeTemplate {
 	/**
+	 * If set, the node's card on the story map shows this image in place of
+	 * the usual excerpt of its text.
+	 */
+	cardImage?: string;
+	/**
+	 * If set, a CSS color theming the node on the story map: the stripe on the
+	 * card's left edge and the node's tag-link attachments (handle, connection
+	 * lines and arrowheads) take this color instead of the default blue.
+	 */
+	color?: string;
+	/**
 	 * Editable fields, in display order.
 	 */
 	fields: DataTemplateField[];
@@ -98,6 +132,12 @@ export interface DataNodeTemplate {
 	 * Display name shown in the template menu.
 	 */
 	name: string;
+	/**
+	 * If true, the node's only data is its name. The edit dialog hides the
+	 * JSON and visual builder views, and the node's text stays an empty
+	 * object.
+	 */
+	nameOnly?: boolean;
 	/**
 	 * Values invisibly merged into the node's data when the story is exported
 	 * to JSON. They never appear in the editor and override user data with the
@@ -115,48 +155,12 @@ export interface DataNodeTemplate {
 
 export const dataNodeTemplates: DataNodeTemplate[] = [
 	{
-		id: 'item-reward',
-		name: 'Item Reward',
-		silentValues: {},
-		fields: [
-			{
-				name: 'category',
-				type: 'string',
-				enum: ['pets', 'gifts', 'toys', 'transport', 'food', 'stickers']
-			},
-			{name: 'kind', type: 'string', default: ''},
-			{name: 'amount', type: 'number', optional: true, default: 1, min: 1},
-			{
-				name: 'properties',
-				type: 'object',
-				optional: true,
-				requires: {field: 'category', equals: 'pets'},
-				fields: [
-					{name: 'age', type: 'number', optional: true, default: 1, min: 1, max: 6},
-					{name: 'neon', type: 'boolean', optional: true, default: true},
-					{name: 'mega_neon', type: 'boolean', optional: true, default: true}
-				]
-			}
-		]
-	},
-	{
-		id: 'currency-reward',
-		name: 'Currency Reward',
-		silentValues: {category: 'currency'},
-		fields: [
-			{
-				name: 'kind',
-				type: 'string',
-				enum: ['money', 'alt_currency']
-			},
-			{name: 'amount', type: 'number', default: 1, min: 1}
-		]
-	},
-	{
 		id: 'trigger',
 		name: 'Trigger',
 		silentValues: {},
 		tagLink: true,
+		cardImage: triggerIcon,
+		color: '#ffd64f',
 		fields: [
 			{
 				name: 'toast',
@@ -171,6 +175,40 @@ export const dataNodeTemplates: DataNodeTemplate[] = [
 						enum: ['pink', 'purple', 'blue', 'red', 'green', 'yellow', 'black']
 					}
 				]
+			},
+			{
+				name: 'reward',
+				type: 'object',
+				optional: true,
+				fields: [
+					{
+						name: 'category',
+						type: 'string',
+						enum: ['pets', 'pet_accessories', 'gifts', 'toys', 'transport', 'food', 'stickers', 'currency']
+					},
+					{
+						name: 'kind',
+						type: 'string',
+						enum: [
+							{
+								when: {field: 'category', equals: 'currency'},
+								options: ['money', 'alt_currency', 'tickets']
+							}
+						]
+					},
+					{name: 'amount', type: 'number', optional: true, default: 1, min: 1},
+					{
+						name: 'properties',
+						type: 'object',
+						optional: true,
+						requires: {field: 'category', equals: 'pets'},
+						fields: [
+							{name: 'age', type: 'number', optional: true, default: 1, min: 1, max: 6},
+							{name: 'neon', type: 'boolean', optional: true, default: true},
+							{name: 'mega_neon', type: 'boolean', optional: true, default: true}
+						]
+					}
+				]
 			}
 		]
 	},
@@ -179,6 +217,8 @@ export const dataNodeTemplates: DataNodeTemplate[] = [
 		name: 'Requirement',
 		silentValues: {},
 		tagLink: true,
+		cardImage: requirementIcon,
+		color: '#eb28fe',
 		fields: [
 			{
 				name: 'type',
@@ -194,9 +234,12 @@ export const dataNodeTemplates: DataNodeTemplate[] = [
 						{
 							name: 'category',
 							type: 'string',
-							enum: ['pets', 'gifts', 'toys', 'transport', 'food', 'stickers']
+							enum: ['pets', 'pet_accessories', 'gifts', 'toys', 'transport', 'food', 'stickers']
 						},
-						{name: 'kind', type: 'string', optional: true, default: ''},
+						{
+							name: 'kind',
+							type: 'string',
+						},
 						{
 							name: 'properties',
 							type: 'object',
@@ -211,6 +254,16 @@ export const dataNodeTemplates: DataNodeTemplate[] = [
 				}
 			}
 		]
+	},
+	{
+		id: 'npc',
+		name: 'NPC',
+		silentValues: {},
+		tagLink: true,
+		nameOnly: true,
+		cardImage: npcPortrait,
+		color: '#18ff50',
+		fields: []
 	}
 ];
 
@@ -227,6 +280,42 @@ export function dataNodeTemplate(
 
 function isJsonObject(value: JsonValue | undefined): value is JsonObject {
 	return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+/**
+ * Is a field's `requires` condition satisfied by the object containing it?
+ */
+export function templateRequirementMet(
+	requires: DataTemplateFieldRequirement,
+	container: JsonObject
+) {
+	return 'equals' in requires
+		? container[requires.field] === requires.equals
+		: container[requires.field] !== requires.notEqual;
+}
+
+/**
+ * Resolves a string field's allowed options against the object containing it.
+ * A plain list of options always applies; for a list of variants, the first
+ * one whose `when` is satisfied applies. Returns undefined--any string is
+ * allowed--for fields without an enum and variant lists where nothing
+ * matches.
+ */
+export function templateFieldEnum(
+	field: Pick<DataTemplateStringField, 'enum'>,
+	container: JsonObject | undefined
+): string[] | undefined {
+	if (!field.enum?.length) {
+		return undefined;
+	}
+
+	if (typeof field.enum[0] === 'string') {
+		return field.enum as string[];
+	}
+
+	return (field.enum as DataTemplateEnumVariant[]).find(variant =>
+		templateRequirementMet(variant.when, container ?? {})
+	)?.options;
 }
 
 function matchesFieldType(
@@ -250,14 +339,18 @@ function matchesFieldType(
 /**
  * Returns the value a field starts with when it's filled in or toggled on.
  * Object fields start with their required subfields, recursively; array
- * fields start empty. Also used for newly-added array items.
+ * fields start empty. Also used for newly-added array items. `container` is
+ * the object the field lives in, used to resolve conditional enums; fields
+ * with sibling conditions should be declared after the fields they depend on
+ * so their defaults see those values.
  */
 export function templateFieldDefault(
-	field: DataTemplateField | DataTemplateArrayItem
+	field: DataTemplateField | DataTemplateArrayItem,
+	container?: JsonObject
 ): JsonValue {
 	switch (field.type) {
 		case 'string':
-			return field.default ?? field.enum?.[0] ?? '';
+			return field.default ?? templateFieldEnum(field, container)?.[0] ?? '';
 		case 'number':
 			return field.default ?? field.min ?? 0;
 		case 'boolean':
@@ -313,7 +406,7 @@ function applyTemplateFields(
 					  )
 					: (existingValue as JsonValue);
 		} else if (!field.optional) {
-			result[field.name] = templateFieldDefault(field);
+			result[field.name] = templateFieldDefault(field, result);
 		}
 	}
 
@@ -324,7 +417,7 @@ function applyTemplateFields(
 			field.optional &&
 			field.requires &&
 			field.name in result &&
-			result[field.requires.field] !== field.requires.equals
+			!templateRequirementMet(field.requires, result)
 		) {
 			delete result[field.name];
 		}
@@ -365,7 +458,9 @@ function fieldTypeName(field: DataTemplateField | DataTemplateArrayItem) {
 
 /**
  * Checks a single value against a field or array item template. `label` names
- * the value in messages, e.g. `"amount"` or `item 2 of "rewards"`.
+ * the value in messages, e.g. `"amount"` or `item 2 of "rewards"`. `container`
+ * is the object the value lives in, used to resolve conditional enums; array
+ * items have none.
  */
 function validateValue(
 	field: DataTemplateField | DataTemplateArrayItem,
@@ -373,7 +468,8 @@ function validateValue(
 	label: string,
 	path: JsonPath,
 	template: DataNodeTemplate,
-	errors: DataTemplateError[]
+	errors: DataTemplateError[],
+	container?: JsonObject
 ) {
 	if (!matchesFieldType(field, value)) {
 		errors.push({
@@ -384,9 +480,11 @@ function validateValue(
 	}
 
 	if (field.type === 'string') {
-		if (field.enum && !field.enum.includes(value as string)) {
+		const options = templateFieldEnum(field, container);
+
+		if (options && !options.includes(value as string)) {
 			errors.push({
-				message: `${label} must be one of ${field.enum
+				message: `${label} must be one of ${options
 					.map(option => JSON.stringify(option))
 					.join(', ')}`,
 				path
@@ -444,14 +542,15 @@ function validateFields(
 			continue;
 		}
 
-		if (
-			field.requires &&
-			container[field.requires.field] !== field.requires.equals
-		) {
+		if (field.requires && !templateRequirementMet(field.requires, container)) {
 			errors.push({
 				message: `"${field.name}" is only allowed when "${
 					field.requires.field
-				}" is ${JSON.stringify(field.requires.equals)}`,
+				}" ${
+					'equals' in field.requires
+						? `is ${JSON.stringify(field.requires.equals)}`
+						: `isn't ${JSON.stringify(field.requires.notEqual)}`
+				}`,
 				path: fieldPath
 			});
 		}
@@ -462,7 +561,8 @@ function validateFields(
 			`"${field.name}"`,
 			fieldPath,
 			template,
-			errors
+			errors,
+			container
 		);
 	}
 

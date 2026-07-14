@@ -63,13 +63,43 @@
 }
 
 .passage-card.data-node .card {
-	border-left: 3px solid var(--blue);
+	border-left: 3px solid var(--data-node-color, var(--blue));
+}
+
+.passage-card.data-node .template-subtitle {
+	color: var(--gray);
+	/* Reserve this line even when a card image wants all remaining height. */
+	flex-shrink: 0;
+	font-size: 90%;
+	margin: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .passage-card.data-node .card-content {
 	font-family: var(--font-monospaced);
 	font-size: 90%;
 	word-break: break-all;
+}
+
+/*
+Cards whose template supplies an image show it in place of the text excerpt,
+filling the space below the title.
+*/
+
+.passage-card.has-card-image .card-content {
+	display: flex;
+	flex-grow: 1;
+	justify-content: center;
+	min-height: 0;
+}
+
+.passage-card.has-card-image .card-content .card-image {
+	min-height: 0;
+	min-width: 0;
+	object-fit: contain;
+	pointer-events: none;
 }
 
 .passage-card.empty .card {
@@ -102,6 +132,10 @@
 }
 
 .compact-passage-cards .passage-card .card-content {
+	display: none;
+}
+
+.compact-passage-cards .passage-card .template-subtitle {
 	display: none;
 }
 

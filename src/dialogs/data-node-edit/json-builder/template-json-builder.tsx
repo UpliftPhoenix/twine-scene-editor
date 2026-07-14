@@ -8,6 +8,8 @@ import {
 	DataTemplateArrayItem,
 	DataTemplateField,
 	templateFieldDefault,
+	templateFieldEnum,
+	templateRequirementMet,
 	validateTemplateValue
 } from '../../../util/data-node-templates';
 import {JsonObject, JsonPath, JsonValue} from '../../../util/json';
@@ -65,6 +67,11 @@ function numberBounds(field: DataTemplateField | DataTemplateArrayItem) {
 const noop = () => {};
 
 interface TemplateValueProps {
+	/**
+	 * Object the value lives in, used to resolve conditional enums. Array
+	 * items have none.
+	 */
+	container?: JsonObject;
 	errorsByPath: Map<string, string>;
 	/**
 	 * Template the value must follow: a field, or an array's item template.
@@ -86,7 +93,8 @@ interface TemplateValueProps {
  * items.
  */
 const TemplateValue: React.FC<TemplateValueProps> = props => {
-	const {errorsByPath, field, onRemoveValue, onSetValue, path, value} = props;
+	const {container, errorsByPath, field, onRemoveValue, onSetValue, path, value} =
+		props;
 	const {t} = useTranslation();
 
 	if (field.type === 'object' && isJsonObject(value)) {
@@ -158,7 +166,10 @@ const TemplateValue: React.FC<TemplateValueProps> = props => {
 		);
 	}
 
-	if (field.type === 'string' && field.enum && typeof value === 'string') {
+	const enumOptions =
+		field.type === 'string' ? templateFieldEnum(field, container) : undefined;
+
+	if (enumOptions && typeof value === 'string') {
 		return (
 			<select
 				aria-label={t('dialogs.dataNodeEdit.builder.stringLabel')}
@@ -171,8 +182,8 @@ const TemplateValue: React.FC<TemplateValueProps> = props => {
 				still has to render as the select's current value. Validation
 				flags it alongside.
 				*/}
-				{!field.enum.includes(value) && <option value={value}>{value}</option>}
-				{field.enum.map(option => (
+				{!enumOptions.includes(value) && <option value={value}>{value}</option>}
+				{enumOptions.map(option => (
 					<option key={option} value={option}>
 						{option}
 					</option>
@@ -213,8 +224,7 @@ const TemplateFieldRow: React.FC<TemplateFieldRowProps> = props => {
 	const present = value !== undefined;
 	const fieldPath = [...path, field.name];
 	const requirementMet =
-		!field.requires ||
-		container[field.requires.field] === field.requires.equals;
+		!field.requires || templateRequirementMet(field.requires, container);
 	const error = errorsByPath.get(pathKey(fieldPath));
 	const bounds = numberBounds(field);
 
@@ -222,7 +232,7 @@ const TemplateFieldRow: React.FC<TemplateFieldRowProps> = props => {
 		if (present) {
 			onRemoveValue(fieldPath);
 		} else {
-			onSetValue(fieldPath, templateFieldDefault(field));
+			onSetValue(fieldPath, templateFieldDefault(field, container));
 		}
 	}
 
@@ -250,6 +260,7 @@ const TemplateFieldRow: React.FC<TemplateFieldRowProps> = props => {
 			<span className="template-builder-key">{field.name}</span>
 			{present ? (
 				<TemplateValue
+					container={container}
 					errorsByPath={errorsByPath}
 					field={field}
 					onRemoveValue={onRemoveValue}
@@ -260,10 +271,15 @@ const TemplateFieldRow: React.FC<TemplateFieldRowProps> = props => {
 			) : (
 				<span className="template-builder-hint">
 					{!requirementMet && field.requires
-						? t('dialogs.dataNodeEdit.builder.requiresHint', {
-								field: field.requires.field,
-								value: JSON.stringify(field.requires.equals)
-						  })
+						? 'equals' in field.requires
+							? t('dialogs.dataNodeEdit.builder.requiresHint', {
+									field: field.requires.field,
+									value: JSON.stringify(field.requires.equals)
+							  })
+							: t('dialogs.dataNodeEdit.builder.requiresNotEqualHint', {
+									field: field.requires.field,
+									value: JSON.stringify(field.requires.notEqual)
+							  })
 						: t(
 								field.optional
 									? 'dialogs.dataNodeEdit.builder.notIncluded'

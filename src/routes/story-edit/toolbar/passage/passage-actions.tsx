@@ -9,6 +9,7 @@ import {
 } from '../../../../store/stories';
 import {Point} from '../../../../util/geometry';
 import {CreateDataNodeButton} from './create-data-node-button';
+import {CreateNpcNodeButton} from './create-npc-node-button';
 import {CreatePassageButton} from './create-passage-button';
 import {DeletePassagesButton} from './delete-passages-button';
 import {EditPassagesButton} from './edit-passages-buttons';
@@ -59,6 +60,7 @@ export const PassageActions: React.FC<PassageActionsProps> = props => {
 		<ButtonBar>
 			<CreatePassageButton getCenter={getCenter} story={story} />
 			<CreateDataNodeButton getCenter={getCenter} story={story} />
+			<CreateNpcNodeButton getCenter={getCenter} story={story} />
 			<EditPassagesButton passages={selectedPassages} story={story} />
 			<RenamePassageButton
 				onRename={name => handleRename(name, soloSelectedPassage)}

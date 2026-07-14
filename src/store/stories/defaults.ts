@@ -20,6 +20,12 @@ export const dataNodeDefaults = (): Omit<Passage, 'id' | 'story'> => ({
 	type: 'data'
 });
 
+export const npcNodeDefaults = (): Omit<Passage, 'id' | 'story'> => ({
+	...dataNodeDefaults(),
+	dataTemplate: 'npc',
+	name: i18n.t('store.npcNodeDefaults.name')
+});
+
 export const storyDefaults = (): Omit<Story, 'id'> => ({
 	ifid: '',
 	lastUpdate: new Date(),

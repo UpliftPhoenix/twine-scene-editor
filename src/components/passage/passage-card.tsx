@@ -8,6 +8,7 @@ import {CardContent} from '../container/card';
 import {SelectableCard} from '../container/card/selectable-card';
 import {Passage, TagColors} from '../../store/stories';
 import {TagStripe} from '../tag/tag-stripe';
+import {dataNodeTemplate} from '../../util/data-node-templates';
 import {passageIsEmpty} from '../../util/passage-is-empty';
 import {tagLinkName} from '../../util/tag-link';
 import {TagLinkHandle, TagLinkHandleProps} from './tag-link-handle';
@@ -48,18 +49,33 @@ export const PassageCard: React.FC<PassageCardProps> = React.memo(props => {
 		tagDisplay
 	} = props;
 	const {t} = useTranslation();
+	const template =
+		passage.type === 'data'
+			? dataNodeTemplate(passage.dataTemplate)
+			: undefined;
+	const cardImage = template?.cardImage;
 	const className = React.useMemo(
 		() =>
 			classNames('passage-card', {
 				'data-node': passage.type === 'data',
 				empty: passageIsEmpty(passage),
+				'has-card-image': !!cardImage,
 				selected: passage.selected,
 				[`tag-display-${tagDisplay}`]: true
 			}),
-		[passage, tagDisplay]
+		[cardImage, passage, tagDisplay]
 	);
 	const container = React.useRef<HTMLDivElement>(null);
 	const excerpt = React.useMemo(() => {
+		if (cardImage) {
+			// draggable={false} plus pointer-events: none in CSS keep the image
+			// from intercepting mouse input meant for the card--otherwise the
+			// browser starts a native image drag.
+			return (
+				<img alt="" className="card-image" draggable={false} src={cardImage} />
+			);
+		}
+
 		if (passage.text.length > 0) {
 			return passage.text.substring(0, excerptLength);
 		}
@@ -73,15 +89,20 @@ export const PassageCard: React.FC<PassageCardProps> = React.memo(props => {
 				)}
 			</span>
 		);
-	}, [passage.text, t]);
+	}, [cardImage, passage.text, t]);
+	const templateColor = template?.color;
 	const style = React.useMemo(
-		() => ({
-			height: passage.height,
-			left: passage.left,
-			top: passage.top,
-			width: passage.width
-		}),
-		[passage.height, passage.left, passage.top, passage.width]
+		() =>
+			({
+				height: passage.height,
+				left: passage.left,
+				top: passage.top,
+				width: passage.width,
+				// Themes the card's stripe and tag link handle, if the template
+				// has a color. See passage-card.css and tag-link-handle.css.
+				'--data-node-color': templateColor
+			} as React.CSSProperties),
+		[passage.height, passage.left, passage.top, passage.width, templateColor]
 	);
 	const handleMouseDown = React.useCallback(
 		(event: MouseEvent) => {
@@ -134,6 +155,11 @@ export const PassageCard: React.FC<PassageCardProps> = React.memo(props => {
 						{passage.type === 'data' && <IconDatabase aria-hidden />}
 						{passage.name}
 					</h2>
+					{passage.type === 'data' && passage.dataTemplate && (
+						<p className="template-subtitle">
+							{template?.name ?? passage.dataTemplate}
+						</p>
+					)}
 					<CardContent>{excerpt}</CardContent>
 					{tagDisplay === 'name' && <TagBadges tagColors={tagColors} tags={passage.tags} />}
 				</SelectableCard>
