@@ -139,6 +139,13 @@ export interface DataNodeTemplate {
 	 */
 	nameOnly?: boolean;
 	/**
+	 * If true, passages can link to nodes using this template with ordinary
+	 * `[[link]]` syntax, the same way they link to other passages. These
+	 * connections draw in the tag-link style, themed with `color`. Links to
+	 * data nodes without this flag are broken links.
+	 */
+	passageLink?: boolean;
+	/**
 	 * Values invisibly merged into the node's data when the story is exported
 	 * to JSON. They never appear in the editor and override user data with the
 	 * same keys.
@@ -158,6 +165,7 @@ export const dataNodeTemplates: DataNodeTemplate[] = [
 		id: 'trigger',
 		name: 'Trigger',
 		silentValues: {},
+		passageLink: true,
 		tagLink: true,
 		cardImage: triggerIcon,
 		color: '#ffd64f',

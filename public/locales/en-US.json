@@ -376,7 +376,7 @@
 				"goTo": "Go To",
 				"javaScript": "JavaScript",
 				"newDataNode": "New Data",
-				"newNpcNode": "New NPC",
+				"newTemplateNode": "New {{name}}",
 				"passageTags": "Passage Tags",
 				"snapToGrid": "Snap to Grid",
 				"startStoryHere": "Start Story Here",
@@ -473,9 +473,6 @@
 		"dataNodeDefaults": {
 			"name": "Untitled Data Node"
 		},
-		"npcNodeDefaults": {
-			"name": "Untitled NPC"
-		},
 		"passageDefaults": {
 			"name": "Untitled Passage"
 		},
@@ -484,6 +481,9 @@
 		},
 		"storyFormatDefaults": {
 			"name": "Untitled Story Format"
+		},
+		"templateNodeDefaults": {
+			"name": "Untitled {{name}}"
 		}
 	},
 	"undoChange": {
@@ -493,8 +493,12 @@
 		"changeTagColor": "Change Tag Color",
 		"editDataNode": "Edit Data Node",
 		"newDataNode": "New Data Node",
-		"newNpcNode": "New NPC Node",
 		"newPassage": "New Passage",
+		"newTemplateNode": {
+			"npc": "New NPC Node",
+			"trigger": "New Trigger Node",
+			"requirement": "New Requirement Node"
+		},
 		"renameDataNode": "Rename Data Node",
 		"deletePassage": "Delete Passage",
 		"deletePassages": "Delete Passages",

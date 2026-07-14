@@ -2,6 +2,7 @@ import Fuse from 'fuse.js';
 import uniq from 'lodash/uniq';
 import {Passage, StorySearchFlags, Story} from './stories.types';
 import {createRegExp} from '../../util/regexp';
+import {dataNodeTemplate} from '../../util/data-node-templates';
 import {parseLinks} from '../../util/parse-links';
 import {tagLinkName} from '../../util/tag-link';
 
@@ -51,6 +52,8 @@ export function passageWithName(
  * Returns connections between passages in a structure optimized for rendering.
  * Connections are divided between draggable and fixed, depending on whether
  * either of their passages are selected (and could be dragged by the user).
+ * Links whose target is a data node land in `nodeConnections` if the node's
+ * template allows passage links, so they can render in the tag-link style.
  */
 export function passageConnections(
 	passages: Passage[],
@@ -58,8 +61,19 @@ export function passageConnections(
 ) {
 	const parser = connectionParser ?? ((text: string) => parseLinks(text, true));
 
-	// Data nodes can't link or be linked to, so they don't participate in
-	// connections at all.
+	// Data nodes can't link out, and mostly can't be linked to--but nodes
+	// whose template has the `passageLink` flag stay addressable by name.
+	// Links to any other data node are broken.
+
+	const linkableNodes = new Map(
+		passages
+			.filter(
+				passage =>
+					isDataNode(passage) &&
+					dataNodeTemplate(passage.dataTemplate)?.passageLink
+			)
+			.map(passage => [passage.name, passage])
+	);
 
 	passages = passages.filter(passage => !isDataNode(passage));
 
@@ -68,11 +82,13 @@ export function passageConnections(
 		draggable: {
 			broken: new Set<Passage>(),
 			connections: new Map<Passage, Set<Passage>>(),
+			nodeConnections: new Map<Passage, Set<Passage>>(),
 			self: new Set<Passage>()
 		},
 		fixed: {
 			broken: new Set<Passage>(),
 			connections: new Map<Passage, Set<Passage>>(),
+			nodeConnections: new Map<Passage, Set<Passage>>(),
 			self: new Set<Passage>()
 		}
 	};
@@ -83,6 +99,7 @@ export function passageConnections(
 				(passage.selected ? result.draggable : result.fixed).self.add(passage);
 			} else {
 				const targetPassage = passageMap.get(targetName);
+				const targetNode = linkableNodes.get(targetName);
 
 				if (targetPassage) {
 					const target =
@@ -94,6 +111,17 @@ export function passageConnections(
 						target.connections.get(passage)!.add(targetPassage);
 					} else {
 						target.connections.set(passage, new Set([targetPassage]));
+					}
+				} else if (targetNode) {
+					const target =
+						passage.selected || targetNode.selected
+							? result.draggable
+							: result.fixed;
+
+					if (target.nodeConnections.has(passage)) {
+						target.nodeConnections.get(passage)!.add(targetNode);
+					} else {
+						target.nodeConnections.set(passage, new Set([targetNode]));
 					}
 				} else {
 					(passage.selected ? result.draggable : result.fixed).broken.add(
@@ -215,11 +243,20 @@ export function storyPassageTags(story: Story) {
 
 export function storyStats(story: Story) {
 	// Data nodes hold JSON, not story text, so they're left out of these
-	// stats--and because they can't be linked to, a link sharing a data node's
-	// name is broken.
+	// stats--and a link sharing a data node's name is broken unless the node's
+	// template allows passage links.
 
 	const storyPassages = story.passages.filter(
 		passage => !isDataNode(passage)
+	);
+	const linkableNodeNames = new Set(
+		story.passages
+			.filter(
+				passage =>
+					isDataNode(passage) &&
+					dataNodeTemplate(passage.dataTemplate)?.passageLink
+			)
+			.map(passage => passage.name)
 	);
 	const links = storyPassages.reduce<string[]>(
 		(links, passage) => [
@@ -230,7 +267,9 @@ export function storyStats(story: Story) {
 	);
 
 	const brokenLinks = uniq(links).filter(
-		link => !storyPassages.some(passage => passage.name === link)
+		link =>
+			!storyPassages.some(passage => passage.name === link) &&
+			!linkableNodeNames.has(link)
 	);
 
 	return {

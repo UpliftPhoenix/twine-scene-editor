@@ -23,11 +23,13 @@ describe('passageConnections()', () => {
 			fixed: {
 				broken: new Set(),
 				connections: new Map([[passages[0], new Set([passages[1]])]]),
+				nodeConnections: new Map(),
 				self: new Set()
 			},
 			draggable: {
 				broken: new Set(),
 				connections: new Map(),
+				nodeConnections: new Map(),
 				self: new Set()
 			}
 		});
@@ -43,11 +45,13 @@ describe('passageConnections()', () => {
 			fixed: {
 				broken: new Set(),
 				connections: new Map(),
+				nodeConnections: new Map(),
 				self: new Set()
 			},
 			draggable: {
 				broken: new Set(),
 				connections: new Map([[passages[0], new Set([passages[1]])]]),
+				nodeConnections: new Map(),
 				self: new Set()
 			}
 		});
@@ -63,11 +67,13 @@ describe('passageConnections()', () => {
 			fixed: {
 				broken: new Set(),
 				connections: new Map(),
+				nodeConnections: new Map(),
 				self: new Set()
 			},
 			draggable: {
 				broken: new Set(),
 				connections: new Map([[passages[0], new Set([passages[1]])]]),
+				nodeConnections: new Map(),
 				self: new Set()
 			}
 		});
@@ -80,11 +86,13 @@ describe('passageConnections()', () => {
 			fixed: {
 				broken: new Set(),
 				connections: new Map(),
+				nodeConnections: new Map(),
 				self: new Set()
 			},
 			draggable: {
 				broken: new Set(),
 				connections: new Map(),
+				nodeConnections: new Map(),
 				self: new Set([passage])
 			}
 		});
@@ -97,11 +105,13 @@ describe('passageConnections()', () => {
 			fixed: {
 				broken: new Set(),
 				connections: new Map(),
+				nodeConnections: new Map(),
 				self: new Set([passage])
 			},
 			draggable: {
 				broken: new Set(),
 				connections: new Map(),
+				nodeConnections: new Map(),
 				self: new Set()
 			}
 		});
@@ -114,11 +124,13 @@ describe('passageConnections()', () => {
 			fixed: {
 				broken: new Set(),
 				connections: new Map(),
+				nodeConnections: new Map(),
 				self: new Set()
 			},
 			draggable: {
 				broken: new Set([passage]),
 				connections: new Map(),
+				nodeConnections: new Map(),
 				self: new Set()
 			}
 		});
@@ -131,13 +143,92 @@ describe('passageConnections()', () => {
 			fixed: {
 				broken: new Set([passage]),
 				connections: new Map(),
+				nodeConnections: new Map(),
 				self: new Set()
 			},
 			draggable: {
 				broken: new Set(),
 				connections: new Map(),
+				nodeConnections: new Map(),
 				self: new Set()
 			}
+		});
+	});
+
+	describe('links to data nodes', () => {
+		const node = (props: Partial<Passage> = {}) =>
+			fakePassage({
+				dataTemplate: 'trigger',
+				name: 'My Trigger',
+				selected: false,
+				type: 'data',
+				...props
+			});
+
+		it('places links to a node whose template allows passage links in nodeConnections', () => {
+			const passages = [
+				fakePassage({name: 'a', selected: false, text: '[[My Trigger]]'}),
+				node()
+			];
+
+			expect(passageConnections(passages)).toEqual({
+				fixed: {
+					broken: new Set(),
+					connections: new Map(),
+					nodeConnections: new Map([[passages[0], new Set([passages[1]])]]),
+					self: new Set()
+				},
+				draggable: {
+					broken: new Set(),
+					connections: new Map(),
+					nodeConnections: new Map(),
+					self: new Set()
+				}
+			});
+		});
+
+		it('places node links with either endpoint selected in the draggable property', () => {
+			const passages = [
+				fakePassage({name: 'a', selected: false, text: '[[My Trigger]]'}),
+				node({selected: true})
+			];
+
+			expect(passageConnections(passages)).toEqual({
+				fixed: {
+					broken: new Set(),
+					connections: new Map(),
+					nodeConnections: new Map(),
+					self: new Set()
+				},
+				draggable: {
+					broken: new Set(),
+					connections: new Map(),
+					nodeConnections: new Map([[passages[0], new Set([passages[1]])]]),
+					self: new Set()
+				}
+			});
+		});
+
+		it("treats links to nodes whose template doesn't allow passage links as broken", () => {
+			const passages = [
+				fakePassage({name: 'a', selected: false, text: '[[My Requirement]]'}),
+				node({dataTemplate: 'requirement', name: 'My Requirement'})
+			];
+
+			expect(passageConnections(passages)).toEqual({
+				fixed: {
+					broken: new Set([passages[0]]),
+					connections: new Map(),
+					nodeConnections: new Map(),
+					self: new Set()
+				},
+				draggable: {
+					broken: new Set(),
+					connections: new Map(),
+					nodeConnections: new Map(),
+					self: new Set()
+				}
+			});
 		});
 	});
 });

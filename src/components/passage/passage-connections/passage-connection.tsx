@@ -7,7 +7,7 @@ import {
 	rectIntersectionWithLine,
 	Point
 } from '../../../util/geometry';
-import {Passage} from '../../../store/stories';
+import {isDataNode, Passage} from '../../../store/stories';
 import {dataNodeTemplate} from '../../../util/data-node-templates';
 import './passage-connection.css';
 
@@ -97,11 +97,15 @@ export const PassageConnection: React.FC<PassageConnectionProps> = props => {
 		});
 	}, [end, offset.left, offset.top, start]);
 
-	// Tag connections start at a data node, and take on its template's theme
-	// color if it has one.
+	// Tag connections have a data node at one end--the start for tag links,
+	// the end for a passage's [[link]] to a node--and take on its template's
+	// theme color if it has one.
 
-	const themeColor =
-		variant === 'tag' ? dataNodeTemplate(start.dataTemplate)?.color : undefined;
+	const themeTemplate =
+		variant === 'tag'
+			? dataNodeTemplate((isDataNode(start) ? start : end).dataTemplate)
+			: undefined;
+	const themeColor = themeTemplate?.color;
 
 	return (
 		<path
@@ -111,7 +115,7 @@ export const PassageConnection: React.FC<PassageConnectionProps> = props => {
 				markerEnd: `url(#${
 					variant === 'tag'
 						? themeColor
-							? `tag-arrowhead-${start.dataTemplate}`
+							? `tag-arrowhead-${themeTemplate!.id}`
 							: 'tag-arrowhead'
 						: 'link-arrowhead'
 				})`,

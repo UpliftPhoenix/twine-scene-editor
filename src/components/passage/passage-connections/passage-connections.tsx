@@ -96,6 +96,20 @@ export const PassageConnections: React.FC<PassageConnectionsProps> = props => {
 				self={emptySet}
 				variant="tag"
 			/>
+			<PassageConnectionGroup
+				broken={emptySet}
+				connections={draggableLinks.nodeConnections}
+				offset={offset}
+				self={emptySet}
+				variant="tag"
+			/>
+			<PassageConnectionGroup
+				broken={emptySet}
+				connections={fixedLinks.nodeConnections}
+				offset={noOffset}
+				self={emptySet}
+				variant="tag"
+			/>
 			{tagLinkDrag && (
 				<TagLinkDragPreview node={tagLinkDrag.node} point={tagLinkDrag.point} />
 			)}

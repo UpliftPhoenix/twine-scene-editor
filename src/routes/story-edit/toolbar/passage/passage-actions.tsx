@@ -7,10 +7,11 @@ import {
 	updatePassage,
 	useStoriesContext
 } from '../../../../store/stories';
+import {dataNodeTemplate} from '../../../../util/data-node-templates';
 import {Point} from '../../../../util/geometry';
 import {CreateDataNodeButton} from './create-data-node-button';
-import {CreateNpcNodeButton} from './create-npc-node-button';
 import {CreatePassageButton} from './create-passage-button';
+import {CreateTemplateNodeButton} from './create-template-node-button';
 import {DeletePassagesButton} from './delete-passages-button';
 import {EditPassagesButton} from './edit-passages-buttons';
 import {GoToPassageButton} from './go-to-passage-button';
@@ -59,8 +60,19 @@ export const PassageActions: React.FC<PassageActionsProps> = props => {
 	return (
 		<ButtonBar>
 			<CreatePassageButton getCenter={getCenter} story={story} />
+			{['npc', 'trigger', 'requirement'].map(id => {
+				const template = dataNodeTemplate(id);
+
+				return template ? (
+					<CreateTemplateNodeButton
+						getCenter={getCenter}
+						key={id}
+						story={story}
+						template={template}
+					/>
+				) : null;
+			})}
 			<CreateDataNodeButton getCenter={getCenter} story={story} />
-			<CreateNpcNodeButton getCenter={getCenter} story={story} />
 			<EditPassagesButton passages={selectedPassages} story={story} />
 			<RenamePassageButton
 				onRename={name => handleRename(name, soloSelectedPassage)}
