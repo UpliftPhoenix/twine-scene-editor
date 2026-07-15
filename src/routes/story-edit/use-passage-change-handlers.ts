@@ -5,17 +5,18 @@ import {
 	useDialogsContext
 } from '../../dialogs';
 import {
-	addPassageTag,
+	connectTagLink,
 	deselectPassage,
 	movePassages,
 	Passage,
 	selectPassage,
 	selectPassagesInRect,
-	Story
+	Story,
+	updatePassage
 } from '../../store/stories';
 import {useUndoableStoriesContext} from '../../store/undoable-stories';
 import {Point, Rect} from '../../util/geometry';
-import {tagLinkName} from '../../util/tag-link';
+import {passagePriority, tagLinkName, tagsWithPriority} from '../../util/tag-link';
 
 export function usePassageChangeHandlers(story: Story) {
 	const selectedPassages = React.useMemo(
@@ -24,6 +25,24 @@ export function usePassageChangeHandlers(story: Story) {
 	);
 	const {dispatch: undoableStoriesDispatch} = useUndoableStoriesContext();
 	const {dispatch: dialogsDispatch} = useDialogsContext();
+
+	const handleChangeTagLinkPriority = React.useCallback(
+		(passage: Passage, delta: number) => {
+			const priority = Math.max(1, (passagePriority(passage) ?? 1) + delta);
+
+			if (priority === passagePriority(passage)) {
+				return;
+			}
+
+			undoableStoriesDispatch(
+				updatePassage(story, passage, {
+					tags: tagsWithPriority(passage.tags, priority)
+				}),
+				'undoChange.changeTagLinkPriority'
+			);
+		},
+		[story, undoableStoriesDispatch]
+	);
 
 	const handleConnectTagLink = React.useCallback(
 		(node: Passage, target: Passage) => {
@@ -37,7 +56,7 @@ export function usePassageChangeHandlers(story: Story) {
 			}
 
 			undoableStoriesDispatch(
-				addPassageTag(story, target, tag),
+				connectTagLink(story, node, target),
 				'undoChange.connectTagLink'
 			);
 		},
@@ -126,6 +145,7 @@ export function usePassageChangeHandlers(story: Story) {
 	);
 
 	return {
+		handleChangeTagLinkPriority,
 		handleConnectTagLink,
 		handleDeselectPassage,
 		handleDragPassages,

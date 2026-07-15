@@ -12,6 +12,11 @@ export interface PassageMapProps {
 	formatName: string;
 	formatVersion: string;
 	/**
+	 * Called when the user changes a linked passage's priority from the widget
+	 * on a tag-link connection.
+	 */
+	onChangeTagLinkPriority?: (passage: Passage, delta: number) => void;
+	/**
 	 * Called when the user drops a data node's link handle onto a passage.
 	 */
 	onConnectTagLink?: (node: Passage, target: Passage) => void;
@@ -84,6 +89,7 @@ export const PassageMap: React.FC<PassageMapProps> = props => {
 	const {
 		formatName,
 		formatVersion,
+		onChangeTagLinkPriority,
 		onConnectTagLink,
 		onDeselect,
 		onDrag,
@@ -296,6 +302,7 @@ export const PassageMap: React.FC<PassageMapProps> = props => {
 					left: (state.dragX - state.startX) / zoom,
 					top: (state.dragY - state.startY) / zoom
 				}}
+				onChangeTagLinkPriority={onChangeTagLinkPriority}
 				passages={passages}
 				startPassageId={startPassageId}
 				tagLinkDrag={tagLinkDrag}

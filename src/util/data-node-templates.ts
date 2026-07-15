@@ -130,6 +130,13 @@ export interface DataNodeTemplate {
 	 */
 	id: string;
 	/**
+	 * If true (only meaningful with `tagLink`), passages linked to a node using
+	 * this template are ranked: each linked passage carries a `priority:N` tag
+	 * alongside the tag link, adjustable from a widget on the connection line.
+	 * See util/tag-link.ts.
+	 */
+	linkPriority?: boolean;
+	/**
 	 * Display name shown in the template menu.
 	 */
 	name: string;
@@ -268,6 +275,7 @@ export const dataNodeTemplates: DataNodeTemplate[] = [
 		name: 'NPC',
 		silentValues: {},
 		tagLink: true,
+		linkPriority: true,
 		nameOnly: true,
 		cardImage: npcPortrait,
 		color: '#18ff50',

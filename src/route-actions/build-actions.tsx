@@ -1,4 +1,5 @@
 import {
+	IconClipboardCopy,
 	IconEyeglass,
 	IconFileText,
 	IconPlayerPlay,
@@ -27,6 +28,9 @@ export interface BuildActionsProps {
 
 export const BuildActions: React.FC<BuildActionsProps> = ({story}) => {
 	const {publishStory} = usePublishing();
+	const [copyJsonResult, setCopyJsonResult] = React.useState<
+		'success' | Error
+	>();
 	const [playError, setPlayError] = React.useState<Error>();
 	const [proofError, setProofError] = React.useState<Error>();
 	const [publishError, setPublishError] = React.useState<Error>();
@@ -35,6 +39,7 @@ export const BuildActions: React.FC<BuildActionsProps> = ({story}) => {
 	const {t} = useTranslation();
 
 	function resetErrors() {
+		setCopyJsonResult(undefined);
 		setPlayError(undefined);
 		setProofError(undefined);
 		setPublishError(undefined);
@@ -103,6 +108,21 @@ export const BuildActions: React.FC<BuildActionsProps> = ({story}) => {
 		}
 
 		saveJson(storyToJson(story, getAppInfo()), storyFileName(story, '.json'));
+	}
+
+	async function handleCopyJsonToClipboard() {
+		if (!story) {
+			throw new Error('No story provided to export');
+		}
+
+		resetErrors();
+
+		try {
+			await navigator.clipboard.writeText(storyToJson(story, getAppInfo()));
+			setCopyJsonResult('success');
+		} catch (error) {
+			setCopyJsonResult(error as Error);
+		}
 	}
 
 	function handleExportAsTwee() {
@@ -203,6 +223,33 @@ export const BuildActions: React.FC<BuildActionsProps> = ({story}) => {
 				label={t('routeActions.build.exportAsJson')}
 				onClick={handleExportAsJson}
 			/>
+			<CardButton
+				ariaLabel={
+					copyJsonResult === 'success'
+						? t('routeActions.build.copyJsonToClipboardSuccess')
+						: copyJsonResult?.message ?? ''
+				}
+				disabled={!story}
+				icon={<IconClipboardCopy />}
+				label={t('routeActions.build.copyJsonToClipboard')}
+				onChangeOpen={() => setCopyJsonResult(undefined)}
+				onClick={handleCopyJsonToClipboard}
+				open={!!copyJsonResult}
+			>
+				<CardContent>
+					<p>
+						{copyJsonResult === 'success'
+							? t('routeActions.build.copyJsonToClipboardSuccess')
+							: copyJsonResult?.message}
+					</p>
+					<IconButton
+						icon={<IconX />}
+						label={t('common.close')}
+						onClick={() => setCopyJsonResult(undefined)}
+						variant="primary"
+					/>
+				</CardContent>
+			</CardButton>
 		</ButtonBar>
 	);
 };

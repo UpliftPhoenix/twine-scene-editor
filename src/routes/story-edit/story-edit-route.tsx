@@ -28,6 +28,7 @@ export const InnerStoryEditRoute: React.FC = () => {
 	const mainContent = React.useRef<HTMLDivElement>(null);
 	const {getCenter, setCenter} = useViewCenter(story, mainContent);
 	const {
+		handleChangeTagLinkPriority,
 		handleConnectTagLink,
 		handleDeselectPassage,
 		handleDragPassages,
@@ -53,6 +54,7 @@ export const InnerStoryEditRoute: React.FC = () => {
 					container={mainContent}
 					formatName={story.storyFormat}
 					formatVersion={story.storyFormatVersion}
+					onChangeTagLinkPriority={handleChangeTagLinkPriority}
 					onConnectTagLink={handleConnectTagLink}
 					onDeselect={handleDeselectPassage}
 					onDrag={handleDragPassages}

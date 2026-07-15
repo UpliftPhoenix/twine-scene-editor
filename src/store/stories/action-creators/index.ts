@@ -1,3 +1,4 @@
+export * from './connect-tag-link';
 export * from './create-newly-linked-passages';
 export * from './create-story';
 export * from './create-untitled-data-node';

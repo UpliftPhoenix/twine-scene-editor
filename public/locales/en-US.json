@@ -152,6 +152,11 @@
 		},
 		"tagLinkHandle": {
 			"label": "Drag onto a passage to connect this node to it"
+		},
+		"tagLinkPriority": {
+			"decrease": "Decrease priority",
+			"increase": "Increase priority",
+			"priority": "Priority"
 		}
 	},
 	"dialogs": {
@@ -453,6 +458,8 @@
 			"storyFormats": "Story Formats"
 		},
 		"build": {
+			"copyJsonToClipboard": "Copy JSON to Clipboard",
+			"copyJsonToClipboardSuccess": "The story's JSON is on the clipboard.",
 			"exportAsJson": "Export As JSON",
 			"exportAsTwee": "Export As Twee",
 			"play": "Play",
@@ -489,6 +496,7 @@
 	"undoChange": {
 		"addTag": "Add Tag",
 		"changeDataNodeTemplate": "Change Data Node Template",
+		"changeTagLinkPriority": "Change Link Priority",
 		"connectTagLink": "Connect Data Node",
 		"changeTagColor": "Change Tag Color",
 		"editDataNode": "Edit Data Node",

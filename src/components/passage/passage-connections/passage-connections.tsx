@@ -9,12 +9,18 @@ import {PassageConnectionGroup} from './passage-connection-group';
 import {LinkMarkers} from './link-markers';
 import {StartConnection} from './start-connection';
 import {TagLinkDragPreview} from './tag-link-drag-preview';
+import {TagLinkPriorityWidgets} from './tag-link-priority';
 import {useFormatReferenceParser} from '../../../store/use-format-reference-parser';
 
 export interface PassageConnectionsProps {
 	formatName: string;
 	formatVersion: string;
 	offset: Point;
+	/**
+	 * Called when the user changes a linked passage's priority from the widget
+	 * on a tag-link connection. If omitted, no widgets are shown.
+	 */
+	onChangeTagLinkPriority?: (passage: Passage, delta: number) => void;
 	passages: Passage[];
 	startPassageId: string;
 	/**
@@ -32,6 +38,7 @@ export const PassageConnections: React.FC<PassageConnectionsProps> = props => {
 		formatName,
 		formatVersion,
 		offset,
+		onChangeTagLinkPriority,
 		passages,
 		startPassageId,
 		tagLinkDrag
@@ -110,6 +117,20 @@ export const PassageConnections: React.FC<PassageConnectionsProps> = props => {
 				self={emptySet}
 				variant="tag"
 			/>
+			{onChangeTagLinkPriority && (
+				<>
+					<TagLinkPriorityWidgets
+						connections={draggableTagLinks}
+						offset={offset}
+						onChangePriority={onChangeTagLinkPriority}
+					/>
+					<TagLinkPriorityWidgets
+						connections={fixedTagLinks}
+						offset={noOffset}
+						onChangePriority={onChangeTagLinkPriority}
+					/>
+				</>
+			)}
 			{tagLinkDrag && (
 				<TagLinkDragPreview node={tagLinkDrag.node} point={tagLinkDrag.point} />
 			)}

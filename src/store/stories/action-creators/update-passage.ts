@@ -1,6 +1,6 @@
 import escapeRegExp from 'lodash/escapeRegExp';
 import {Thunk} from 'react-hook-thunk-reducer';
-import {tagLinkName} from '../../../util/tag-link';
+import {tagLinkName, tagsWithoutOrphanedPriority} from '../../../util/tag-link';
 import {storyWithId} from '../getters';
 import {Passage, StoriesAction, StoriesState, Story} from '../stories.types';
 import {createNewlyLinkedPassages} from './create-newly-linked-passages';
@@ -75,16 +75,21 @@ export function updatePassage(
 					linkedPassage.id !== passage.id &&
 					linkedPassage.tags.includes(oldTagLink)
 				) {
+					// Also drop priority tags that no remaining link justifies, e.g.
+					// when the node's new template doesn't rank its links.
+
 					dispatch({
 						type: 'updatePassage',
 						passageId: linkedPassage.id,
 						storyId: story.id,
 						props: {
-							tags: newTagLink
-								? linkedPassage.tags.map(tag =>
-										tag === oldTagLink ? newTagLink : tag
-								  )
-								: linkedPassage.tags.filter(tag => tag !== oldTagLink)
+							tags: tagsWithoutOrphanedPriority(
+								newTagLink
+									? linkedPassage.tags.map(tag =>
+											tag === oldTagLink ? newTagLink : tag
+									  )
+									: linkedPassage.tags.filter(tag => tag !== oldTagLink)
+							)
 						}
 					});
 				}
