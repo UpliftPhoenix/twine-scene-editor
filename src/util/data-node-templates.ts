@@ -176,8 +176,7 @@ export const dataNodeTemplates: DataNodeTemplate[] = [
 				type: 'object',
 				optional: true,
 				fields: [
-					{name: 'name', type: 'string', default: ''},
-					{name: 'description', type: 'string', default: ''},
+					{name: 'title', type: 'string', default: ''},
 					{
 						name: 'color',
 						type: 'string',
