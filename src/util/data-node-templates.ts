@@ -276,10 +276,15 @@ export const dataNodeTemplates: DataNodeTemplate[] = [
 		silentValues: {},
 		tagLink: true,
 		linkPriority: true,
-		nameOnly: true,
 		cardImage: npcPortrait,
 		color: '#18ff50',
-		fields: []
+		fields: [
+			{
+				name: 'idle_animation',
+				type: 'string',
+				optional: true,
+			},
+		]
 	},
 	{
 		id: 'setpiece',
