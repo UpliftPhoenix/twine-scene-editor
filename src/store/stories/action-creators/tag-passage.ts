@@ -6,6 +6,7 @@ import {
 	UpdatePassageAction
 } from '../stories.types';
 import {isValidTagName} from '../../../util/tag';
+import {tagsWithoutOrphanedNegation} from '../../../util/tag-link';
 import {storyPassageTags} from '../getters';
 import {Thunk} from 'react-hook-thunk-reducer';
 import {colorString} from '../../../util/color';
@@ -57,7 +58,8 @@ export function addPassageTag(
 }
 
 /**
- * Removes a tag from a passage.
+ * Removes a tag from a passage. Removing a tag link this way breaks the link,
+ * so any negation tag it justified goes with it--see util/tag-link.ts.
  */
 export function removePassageTag(
 	story: Story,
@@ -80,6 +82,10 @@ export function removePassageTag(
 		type: 'updatePassage',
 		passageId: passage.id,
 		storyId: story.id,
-		props: {tags: passage.tags.filter(t => t !== tagName)}
+		props: {
+			tags: tagsWithoutOrphanedNegation(
+				passage.tags.filter(t => t !== tagName)
+			)
+		}
 	};
 }

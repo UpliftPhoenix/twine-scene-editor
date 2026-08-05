@@ -9,6 +9,7 @@ import {PassageConnectionGroup} from './passage-connection-group';
 import {LinkMarkers} from './link-markers';
 import {StartConnection} from './start-connection';
 import {TagLinkDragPreview} from './tag-link-drag-preview';
+import {TagLinkNegationWidgets} from './tag-link-negation';
 import {TagLinkPriorityWidgets} from './tag-link-priority';
 import {useFormatReferenceParser} from '../../../store/use-format-reference-parser';
 
@@ -21,6 +22,11 @@ export interface PassageConnectionsProps {
 	 * on a tag-link connection. If omitted, no widgets are shown.
 	 */
 	onChangeTagLinkPriority?: (passage: Passage, delta: number) => void;
+	/**
+	 * Called when the user toggles the NOT widget on a tag-link connection. If
+	 * omitted, no widgets are shown.
+	 */
+	onToggleTagLinkNegation?: (node: Passage, passage: Passage) => void;
 	passages: Passage[];
 	startPassageId: string;
 	/**
@@ -39,6 +45,7 @@ export const PassageConnections: React.FC<PassageConnectionsProps> = props => {
 		formatVersion,
 		offset,
 		onChangeTagLinkPriority,
+		onToggleTagLinkNegation,
 		passages,
 		startPassageId,
 		tagLinkDrag
@@ -128,6 +135,20 @@ export const PassageConnections: React.FC<PassageConnectionsProps> = props => {
 						connections={fixedTagLinks}
 						offset={noOffset}
 						onChangePriority={onChangeTagLinkPriority}
+					/>
+				</>
+			)}
+			{onToggleTagLinkNegation && (
+				<>
+					<TagLinkNegationWidgets
+						connections={draggableTagLinks}
+						offset={offset}
+						onToggleNegation={onToggleTagLinkNegation}
+					/>
+					<TagLinkNegationWidgets
+						connections={fixedTagLinks}
+						offset={noOffset}
+						onToggleNegation={onToggleTagLinkNegation}
 					/>
 				</>
 			)}

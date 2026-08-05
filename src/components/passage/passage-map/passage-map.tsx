@@ -24,6 +24,10 @@ export interface PassageMapProps {
 	onDrag: (change: Point) => void;
 	onEdit: (passage: Passage) => void;
 	onSelect: (passage: Passage, exclusive: boolean) => void;
+	/**
+	 * Called when the user toggles the NOT widget on a tag-link connection.
+	 */
+	onToggleTagLinkNegation?: (node: Passage, passage: Passage) => void;
 	passages: Passage[];
 	startPassageId: string;
 	tagColors: Story['tagColors'];
@@ -95,6 +99,7 @@ export const PassageMap: React.FC<PassageMapProps> = props => {
 		onDrag,
 		onEdit,
 		onSelect,
+		onToggleTagLinkNegation,
 		passages,
 		startPassageId,
 		tagColors,
@@ -303,6 +308,7 @@ export const PassageMap: React.FC<PassageMapProps> = props => {
 					top: (state.dragY - state.startY) / zoom
 				}}
 				onChangeTagLinkPriority={onChangeTagLinkPriority}
+				onToggleTagLinkNegation={onToggleTagLinkNegation}
 				passages={passages}
 				startPassageId={startPassageId}
 				tagLinkDrag={tagLinkDrag}

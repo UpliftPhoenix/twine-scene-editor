@@ -134,3 +134,79 @@ export function tagsWithoutOrphanedPriority(tags: string[]): string[] {
 
 	return tags.filter(tag => !isPriorityTag(tag));
 }
+
+// Negation tags invert a single link from a data node whose template has
+// `linkNegation` set: the passage is where the story goes when the node's
+// condition *isn't* met. Like priority tags, the tag--`not:nodeName`--is the
+// only record of the state, toggled from a widget on the connection line, and
+// it's tied to the link that justifies it: break the link and the tag goes
+// away.
+//
+// The tag names the node alone, not the whole tag link, so a requirement and a
+// trigger with the same name share one negation tag--toggling either link
+// toggles both.
+
+const negationTagPrefix = 'not:';
+
+/**
+ * Is a tag a negation tag?
+ */
+export function isNegationTag(tag: string) {
+	return tag.startsWith(negationTagPrefix);
+}
+
+/**
+ * Does a tag link a passage to a node whose template allows negating its links?
+ */
+export function tagLinkHasNegation(tag: string) {
+	return !!tagLinkTemplate(tag)?.linkNegation;
+}
+
+/**
+ * The negation tag belonging to a tag link, or undefined if the tag isn't a
+ * link that can be negated.
+ */
+export function tagLinkNegationTag(tag: string): string | undefined {
+	if (!tagLinkHasNegation(tag)) {
+		return undefined;
+	}
+
+	return `${negationTagPrefix}${tag.substring(tag.indexOf(':') + 1)}`;
+}
+
+/**
+ * The negation tag for a data node's links, or undefined if the node's links
+ * can't be negated.
+ */
+export function nodeNegationTag(node: Passage): string | undefined {
+	const tag = tagLinkName(node);
+
+	return tag ? tagLinkNegationTag(tag) : undefined;
+}
+
+/**
+ * Returns a set of tags with a negation tag either present or absent.
+ */
+export function tagsWithNegation(
+	tags: string[],
+	negationTag: string,
+	negated: boolean
+): string[] {
+	const others = tags.filter(tag => tag !== negationTag);
+
+	return negated ? [...others, negationTag] : others;
+}
+
+/**
+ * Removes negation tags that no remaining tag link justifies, e.g. after the
+ * node they came from is deleted or unlinked.
+ */
+export function tagsWithoutOrphanedNegation(tags: string[]): string[] {
+	const justified = new Set(
+		tags
+			.filter(tagLinkHasNegation)
+			.map(tag => tagLinkNegationTag(tag) as string)
+	);
+
+	return tags.filter(tag => !isNegationTag(tag) || justified.has(tag));
+}

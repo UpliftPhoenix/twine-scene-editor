@@ -1,12 +1,16 @@
 import * as React from 'react';
 import {Thunk} from 'react-hook-thunk-reducer';
-import {tagLinkName, tagsWithoutOrphanedPriority} from '../../../util/tag-link';
+import {
+	tagLinkName,
+	tagsWithoutOrphanedNegation,
+	tagsWithoutOrphanedPriority
+} from '../../../util/tag-link';
 import {Passage, StoriesAction, StoriesState, Story} from '../stories.types';
 
 /**
  * Deleting a tag-linked data node orphans its tag on every linked passage, so
- * remove those tags first--along with priority tags that no remaining link
- * justifies. See util/tag-link.ts.
+ * remove those tags first--along with priority and negation tags that no
+ * remaining link justifies. See util/tag-link.ts.
  */
 function cleanUpTagLinks(
 	story: Story,
@@ -33,8 +37,10 @@ function cleanUpTagLinks(
 				passageId: passage.id,
 				storyId: story.id,
 				props: {
-					tags: tagsWithoutOrphanedPriority(
-						passage.tags.filter(tag => !orphanedTags.includes(tag))
+					tags: tagsWithoutOrphanedNegation(
+						tagsWithoutOrphanedPriority(
+							passage.tags.filter(tag => !orphanedTags.includes(tag))
+						)
 					)
 				}
 			});

@@ -153,6 +153,12 @@
 		"tagLinkHandle": {
 			"label": "Drag onto a passage to connect this node to it"
 		},
+		"tagLinkNegation": {
+			"no": "NO",
+			"turnOff": "Switch to YES: use this passage when \"{{name}}\" is met",
+			"turnOn": "Switch to NO: use this passage when \"{{name}}\" isn't met",
+			"yes": "YES"
+		},
 		"tagLinkPriority": {
 			"decrease": "Decrease priority",
 			"increase": "Increase priority",
@@ -516,6 +522,7 @@
 		"renamePassage": "Rename Passage",
 		"removeTag": "Remove Tag",
 		"renameTag": "Rename Tag",
-		"replaceAllText": "Replace All"
+		"replaceAllText": "Replace All",
+		"toggleTagLinkNegation": "Toggle NOT Condition"
 	}
 }

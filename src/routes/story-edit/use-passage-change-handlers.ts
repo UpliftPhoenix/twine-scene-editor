@@ -16,7 +16,13 @@ import {
 } from '../../store/stories';
 import {useUndoableStoriesContext} from '../../store/undoable-stories';
 import {Point, Rect} from '../../util/geometry';
-import {passagePriority, tagLinkName, tagsWithPriority} from '../../util/tag-link';
+import {
+	nodeNegationTag,
+	passagePriority,
+	tagLinkName,
+	tagsWithNegation,
+	tagsWithPriority
+} from '../../util/tag-link';
 
 export function usePassageChangeHandlers(story: Story) {
 	const selectedPassages = React.useMemo(
@@ -144,6 +150,26 @@ export function usePassageChangeHandlers(story: Story) {
 		[selectedPassages, story, undoableStoriesDispatch]
 	);
 
+	const handleToggleTagLinkNegation = React.useCallback(
+		(node: Passage, passage: Passage) => {
+			const tag = nodeNegationTag(node);
+
+			// Nothing to do if the node's links can't be negated.
+
+			if (!tag) {
+				return;
+			}
+
+			undoableStoriesDispatch(
+				updatePassage(story, passage, {
+					tags: tagsWithNegation(passage.tags, tag, !passage.tags.includes(tag))
+				}),
+				'undoChange.toggleTagLinkNegation'
+			);
+		},
+		[story, undoableStoriesDispatch]
+	);
+
 	return {
 		handleChangeTagLinkPriority,
 		handleConnectTagLink,
@@ -151,6 +177,7 @@ export function usePassageChangeHandlers(story: Story) {
 		handleDragPassages,
 		handleEditPassage,
 		handleSelectPassage,
-		handleSelectRect
+		handleSelectRect,
+		handleToggleTagLinkNegation
 	};
 }

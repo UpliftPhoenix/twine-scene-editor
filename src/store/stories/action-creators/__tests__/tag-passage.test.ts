@@ -93,6 +93,26 @@ describe('removePassageTag', () => {
 		});
 	});
 
+	it('also removes a negation tag when the tag link justifying it goes away', () => {
+		passage.tags = ['trigger:My-Trigger', 'not:My-Trigger', 'unrelated'];
+		expect(removePassageTag(story, passage, 'trigger:My-Trigger')).toEqual({
+			type: 'updatePassage',
+			passageId: passage.id,
+			props: {tags: ['unrelated']},
+			storyId: story.id
+		});
+	});
+
+	it('keeps a negation tag while its tag link remains', () => {
+		passage.tags = ['trigger:My-Trigger', 'not:My-Trigger', 'unrelated'];
+		expect(removePassageTag(story, passage, 'unrelated')).toEqual({
+			type: 'updatePassage',
+			passageId: passage.id,
+			props: {tags: ['trigger:My-Trigger', 'not:My-Trigger']},
+			storyId: story.id
+		});
+	});
+
 	it('throws an error if the tag name is invalid', () =>
 		expect(() => removePassageTag(story, passage, 'bad tag')).toThrow());
 

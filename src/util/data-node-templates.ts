@@ -130,6 +130,16 @@ export interface DataNodeTemplate {
 	 */
 	id: string;
 	/**
+	 * If true (only meaningful with `tagLink`), each link from a node using this
+	 * template can be negated: a toggle on the connection line adds a
+	 * `not:nodeName` tag to the linked passage, marking it as the branch taken
+	 * when the node's condition isn't met. See util/tag-link.ts.
+	 *
+	 * Don't combine this with `linkPriority`--both widgets sit at the midpoint
+	 * of the connection and would overlap.
+	 */
+	linkNegation?: boolean;
+	/**
 	 * If true (only meaningful with `tagLink`), passages linked to a node using
 	 * this template are ranked: each linked passage carries a `priority:N` tag
 	 * alongside the tag link, adjustable from a widget on the connection line.
@@ -175,6 +185,7 @@ export const dataNodeTemplates: DataNodeTemplate[] = [
 		silentValues: {},
 		passageLink: true,
 		tagLink: true,
+		linkNegation: true,
 		cardImage: triggerIcon,
 		color: '#ffd64f',
 		fields: [
@@ -232,6 +243,7 @@ export const dataNodeTemplates: DataNodeTemplate[] = [
 		name: 'Requirement',
 		silentValues: {},
 		tagLink: true,
+		linkNegation: true,
 		cardImage: requirementIcon,
 		color: '#eb28fe',
 		fields: [

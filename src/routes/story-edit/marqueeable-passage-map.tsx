@@ -73,7 +73,7 @@ export const MarqueeablePassageMap: React.FC<
 		<>
 			<MarqueeSelection
 				container={container}
-				ignoreEventsOnSelector=".passage-card, .fuzzy-finder, .zoom-buttons, .tag-link-priority"
+				ignoreEventsOnSelector=".passage-card, .fuzzy-finder, .zoom-buttons, .tag-link-priority, .tag-link-negation"
 				onSelectRect={handleSelectRect}
 				onTemporarySelectRect={handleTemporarySelectRect}
 			/>

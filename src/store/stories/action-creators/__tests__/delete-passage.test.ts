@@ -57,6 +57,27 @@ describe('deletePassage action creator', () => {
 			]
 		]);
 	});
+
+	it('removes the negation tag belonging to a deleted data node', () => {
+		story = fakeStory(2);
+		story.passages[0].name = 'My Trigger';
+		story.passages[0].type = 'data';
+		story.passages[0].dataTemplate = 'trigger';
+		story.passages[1].tags = [
+			'trigger:My-Trigger',
+			'not:My-Trigger',
+			'unrelated'
+		];
+		deletePassage(story, story.passages[0])(dispatch, getState);
+		expect(dispatchMock.mock.calls[0]).toEqual([
+			{
+				type: 'updatePassage',
+				passageId: story.passages[1].id,
+				props: {tags: ['unrelated']},
+				storyId: story.id
+			}
+		]);
+	});
 });
 
 describe('deletePassages action creator', () => {

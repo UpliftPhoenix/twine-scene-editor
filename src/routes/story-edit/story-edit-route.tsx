@@ -34,7 +34,8 @@ export const InnerStoryEditRoute: React.FC = () => {
 		handleDragPassages,
 		handleEditPassage,
 		handleSelectPassage,
-		handleSelectRect
+		handleSelectRect,
+		handleToggleTagLinkNegation
 	} = usePassageChangeHandlers(story);
 	const visibleZoom = useZoomTransition(story.zoom, mainContent.current);
 
@@ -61,6 +62,7 @@ export const InnerStoryEditRoute: React.FC = () => {
 					onEdit={handleEditPassage}
 					onSelect={handleSelectPassage}
 					onSelectRect={handleSelectRect}
+					onToggleTagLinkNegation={handleToggleTagLinkNegation}
 					passages={story.passages}
 					startPassageId={story.startPassage}
 					tagColors={story.tagColors}

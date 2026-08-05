@@ -229,6 +229,52 @@ describe('updatePassage action creator', () => {
 				]);
 			});
 
+			it('moves negation tags on other passages when the node is renamed', () => {
+				story.passages[1].tags = [
+					'trigger:Old-Name',
+					'not:Old-Name',
+					'unrelated'
+				];
+				updatePassage(
+					story,
+					story.passages[0],
+					{name: 'New Name'},
+					{dontUpdateOthers: true}
+				)(dispatch, getState);
+				expect(dispatchMock.mock.calls[1]).toEqual([
+					{
+						passageId: story.passages[1].id,
+						props: {
+							tags: ['trigger:New-Name', 'not:New-Name', 'unrelated']
+						},
+						storyId: story.id,
+						type: 'updatePassage'
+					}
+				]);
+			});
+
+			it("removes negation tags when the node's new template can't negate its links", () => {
+				story.passages[1].tags = [
+					'trigger:Old-Name',
+					'not:Old-Name',
+					'unrelated'
+				];
+				updatePassage(
+					story,
+					story.passages[0],
+					{dataTemplate: 'npc'},
+					{dontUpdateOthers: true}
+				)(dispatch, getState);
+				expect(dispatchMock.mock.calls[1]).toEqual([
+					{
+						passageId: story.passages[1].id,
+						props: {tags: ['npc:Old-Name', 'unrelated']},
+						storyId: story.id,
+						type: 'updatePassage'
+					}
+				]);
+			});
+
 			it("carries the old tag's color over to the new tag", () => {
 				story.tagColors = {'trigger:Old-Name': 'red'};
 				updatePassage(

@@ -1,6 +1,11 @@
 import escapeRegExp from 'lodash/escapeRegExp';
 import {Thunk} from 'react-hook-thunk-reducer';
-import {tagLinkName, tagsWithoutOrphanedPriority} from '../../../util/tag-link';
+import {
+	tagLinkName,
+	tagLinkNegationTag,
+	tagsWithoutOrphanedNegation,
+	tagsWithoutOrphanedPriority
+} from '../../../util/tag-link';
 import {storyWithId} from '../getters';
 import {Passage, StoriesAction, StoriesState, Story} from '../stories.types';
 import {createNewlyLinkedPassages} from './create-newly-linked-passages';
@@ -70,25 +75,42 @@ export function updatePassage(
 		const newTagLink = tagLinkName({...passage, ...props});
 
 		if (oldTagLink && oldTagLink !== newTagLink) {
+			// The negation tag names the node, so a rename moves it along with the
+			// tag link itself.
+
+			const oldNegationTag = tagLinkNegationTag(oldTagLink);
+			const newNegationTag = newTagLink
+				? tagLinkNegationTag(newTagLink)
+				: undefined;
+
 			story.passages.forEach(linkedPassage => {
 				if (
 					linkedPassage.id !== passage.id &&
 					linkedPassage.tags.includes(oldTagLink)
 				) {
-					// Also drop priority tags that no remaining link justifies, e.g.
-					// when the node's new template doesn't rank its links.
+					// Also drop priority and negation tags that no remaining link
+					// justifies, e.g. when the node's new template doesn't rank or negate
+					// its links.
+
+					const movedTags = newTagLink
+						? linkedPassage.tags.map(tag =>
+								tag === oldTagLink ? newTagLink : tag
+						  )
+						: linkedPassage.tags.filter(tag => tag !== oldTagLink);
 
 					dispatch({
 						type: 'updatePassage',
 						passageId: linkedPassage.id,
 						storyId: story.id,
 						props: {
-							tags: tagsWithoutOrphanedPriority(
-								newTagLink
-									? linkedPassage.tags.map(tag =>
-											tag === oldTagLink ? newTagLink : tag
-									  )
-									: linkedPassage.tags.filter(tag => tag !== oldTagLink)
+							tags: tagsWithoutOrphanedNegation(
+								tagsWithoutOrphanedPriority(
+									oldNegationTag && newNegationTag
+										? movedTags.map(tag =>
+												tag === oldNegationTag ? newNegationTag : tag
+										  )
+										: movedTags
+								)
 							)
 						}
 					});
