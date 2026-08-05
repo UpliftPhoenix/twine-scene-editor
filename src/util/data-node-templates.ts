@@ -190,6 +190,11 @@ export const dataNodeTemplates: DataNodeTemplate[] = [
 		color: '#ffd64f',
 		fields: [
 			{
+				name: 'dialog_text',
+				type: 'string',
+				optional: true,
+			},
+			{
 				name: 'toast',
 				type: 'object',
 				optional: true,
@@ -286,17 +291,12 @@ export const dataNodeTemplates: DataNodeTemplate[] = [
 		id: 'npc',
 		name: 'NPC',
 		silentValues: {},
+		nameOnly: true,
 		tagLink: true,
 		linkPriority: true,
 		cardImage: npcPortrait,
 		color: '#18ff50',
-		fields: [
-			{
-				name: 'idle_animation',
-				type: 'string',
-				optional: true,
-			},
-		]
+		fields: []
 	},
 	{
 		id: 'setpiece',
